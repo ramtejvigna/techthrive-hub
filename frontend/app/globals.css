@@ -1,26 +1,311 @@
 @import "tailwindcss";
 
+/* ── Light tech theme ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --background: #f0f4f9;
+  --foreground: #0c1222;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-muted: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --surface-subtle: #e2e8f0;
+  --overlay: rgba(15, 23, 42, 0.2);
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --muted: #64748b;
+  --muted-light: #94a3b8;
+
+  --accent: #0066ff;
+  --accent-hover: #0052cc;
+  --accent-light: #e8f1ff;
+  --accent-cyan: #06b6d4;
+  --accent-glow: rgba(0, 102, 255, 0.12);
+
+  --sidebar-bg: #ffffff;
+  --sidebar-fg: #0c1222;
+  --sidebar-muted: #64748b;
+  --sidebar-active-bg: #e8f1ff;
+  --sidebar-active-fg: #0066ff;
+  --sidebar-border: #e2e8f0;
+
+  --grid-color: rgba(0, 102, 255, 0.05);
+  --grid-dot: rgba(0, 102, 255, 0.15);
+
+  --radius: 0.75rem;
+  --font-mono: var(--font-geist-mono), "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ── Dark tech theme ── */
+.dark {
+  color-scheme: dark;
+
+  --background: #0a0f1a;
+  --foreground: #e8edf5;
+  --surface: #111827;
+  --surface-elevated: #1a2234;
+  --surface-muted: #151d2e;
+  --surface-hover: #1e293b;
+  --surface-subtle: #334155;
+  --overlay: rgba(0, 0, 0, 0.5);
+  --border: #1e293b;
+  --border-strong: #334155;
+  --muted: #94a3b8;
+  --muted-light: #64748b;
+
+  --accent: #3b8bff;
+  --accent-hover: #5ca0ff;
+  --accent-light: #0f2347;
+  --accent-cyan: #22d3ee;
+  --accent-glow: rgba(59, 139, 255, 0.18);
+
+  --sidebar-bg: #0d1321;
+  --sidebar-fg: #e8edf5;
+  --sidebar-muted: #94a3b8;
+  --sidebar-active-bg: #152040;
+  --sidebar-active-fg: #5ca0ff;
+  --sidebar-border: #1e293b;
+
+  --grid-color: rgba(59, 139, 255, 0.06);
+  --grid-dot: rgba(59, 139, 255, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes data-stream {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* ── Tech grid canvas ── */
+.tech-canvas {
+  position: relative;
+  height: 100%;
+  background-color: var(--background);
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.tech-canvas::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(0, 102, 255, 0.06), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 0% 100%, rgba(6, 182, 212, 0.05), transparent 50%);
+}
+
+.tech-canvas > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Dot-grid variant for auth */
+.tech-dots {
+  background-color: var(--background);
+  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-cyan) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Cards ── */
+.tech-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 1px 2px rgba(12, 18, 34, 0.04),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s;
+}
+
+.tech-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+  box-shadow:
+    0 4px 16px var(--accent-glow),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+}
+
+.dark .tech-card {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.dark .tech-card:hover {
+  box-shadow:
+    0 4px 16px var(--accent-glow),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}
+
+.dark .glass-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.glass-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(12, 18, 34, 0.05);
+}
+
+/* ── Buttons ── */
+.btn-tech {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 102, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.btn-tech:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.btn-tech:active {
+  transform: scale(0.98);
+}
+
+/* ── Mono labels ── */
+.tech-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Corner brackets (tech frame) ── */
+.tech-frame {
+  position: relative;
+}
+
+.tech-frame::before,
+.tech-frame::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--accent);
+  border-style: solid;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.tech-frame::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+  border-radius: 4px 0 0 0;
+}
+
+.tech-frame::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+  border-radius: 0 0 4px 0;
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-light);
+}
+
+/* Kanban board — horizontal + vertical scroll within the board area */
+.kanban-board-scroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: var(--muted-light) color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.kanban-board-scroll::-webkit-scrollbar {
+  height: 12px;
+}
+
+.kanban-board-scroll::-webkit-scrollbar-track {
+  margin-inline: 0.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.kanban-board-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--muted-light);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.kanban-board-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
