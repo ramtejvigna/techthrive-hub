@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getAllDocs } from "@/lib/content";
+import { getAllDocs } from "@/lib/content-loader";
 import { formatDate } from "@/lib/utils";
 
 export default async function DocsPage() {
@@ -11,7 +11,7 @@ export default async function DocsPage() {
       <header className="mb-8">
         <h1 className="text-2xl font-semibold text-[var(--foreground)]">Docs</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Product guides and knowledge base content managed in Decap CMS.
+          Product guides and knowledge base content.
         </p>
       </header>
 

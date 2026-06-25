@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { getAllPlans, getPlanBySlug } from "@/lib/content";
+import { getAllPlans, getPlanBySlug } from "@/lib/content-loader";
 import { formatDate } from "@/lib/utils";
 
 type PageProps = {

@@ -56,6 +56,74 @@ Open [http://localhost:3000](http://localhost:3000).
 - `npm run start` — production server
 - `npm run lint` — ESLint
 
+## Sanity CMS (Docs + Plans)
+
+This project uses Sanity for content management with an embedded Studio at `/studio`.
+
+### First-time setup
+
+1. **Create a Sanity project** (if you haven't already):
+
+Visit [sanity.io/manage](https://sanity.io/manage) and create a new project. Note your:
+- **Project ID** (e.g., `abc123xyz`)
+- **Dataset name** (usually `production`)
+
+2. **Add Sanity credentials** to your environment:
+
+In `.env.local`:
+
+```bash
+NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id_here
+NEXT_PUBLIC_SANITY_DATASET=production
+```
+
+In **Vercel** (Project → Settings → Environment Variables), add the same two variables.
+
+3. **Deploy schemas to Sanity**:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000/studio` and you'll be prompted to log in with Sanity. This automatically deploys your schemas (Docs and Plans) to your Sanity project.
+
+4. **Add CORS origins in Sanity dashboard**:
+
+Go to [sanity.io/manage](https://sanity.io/manage) → your project → API → CORS Origins, and add:
+- `http://localhost:3000` (for local dev)
+- `https://techthrive-dash.vercel.app` (for production)
+
+5. **Start creating content**:
+
+Visit `/studio` to create Docs and Plans. Content is stored in Sanity's cloud and fetched via their API.
+
+### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/studio` | Sanity Studio (CMS admin) |
+| `/docs` | CMS-powered docs listing |
+| `/docs/[slug]` | Doc detail page |
+| `/plans` | CMS-powered plans listing |
+| `/plans/[slug]` | Plan detail page |
+
+### Content structure
+
+**Docs:**
+- Title, slug, description, tags
+- Published date
+- Rich text body with code blocks
+
+**Plans:**
+- Title, slug, summary
+- Status (draft/planned/active/completed)
+- Published date
+- Rich text body with code blocks
+
+### Migration from markdown
+
+The old markdown files in `content/docs` and `content/plans` can be migrated to Sanity manually via the Studio, or removed if no longer needed.
+
 ## Decap CMS (Docs + Plans)
 
 This project includes Decap CMS configured for Markdown-backed content:

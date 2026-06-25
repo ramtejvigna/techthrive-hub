@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { getAllDocs, getDocBySlug } from "@/lib/content";
+import { getAllDocs, getDocBySlug } from "@/lib/content-loader";
 import { formatDate } from "@/lib/utils";
 
 type PageProps = {

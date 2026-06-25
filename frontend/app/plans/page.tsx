@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getAllPlans } from "@/lib/content";
+import { getAllPlans } from "@/lib/content-loader";
 import { formatDate } from "@/lib/utils";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -18,7 +18,7 @@ export default async function PlansPage() {
       <header className="mb-8">
         <h1 className="text-2xl font-semibold text-[var(--foreground)]">Plans</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Public roadmap and implementation plans managed in Decap CMS.
+          Public roadmap and implementation plans.
         </p>
       </header>
 
