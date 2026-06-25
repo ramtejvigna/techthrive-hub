@@ -117,3 +117,23 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+export interface ContentEntryBase {
+  title: string;
+  slug: string;
+  publishedAt: string;
+  body: string;
+  html: string;
+}
+
+export interface DocEntry extends ContentEntryBase {
+  description: string;
+  tags: string[];
+}
+
+export type PlanStatus = "draft" | "planned" | "active" | "completed";
+
+export interface PlanEntry extends ContentEntryBase {
+  status: PlanStatus;
+  summary: string;
+}

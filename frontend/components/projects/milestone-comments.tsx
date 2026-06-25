@@ -23,18 +23,21 @@ export function MilestoneComments({
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  async function loadComments() {
-    setLoading(true);
-    try {
+  useEffect(() => {
+    let active = true;
+
+    async function fetchComments() {
       const data = await api.getMilestoneComments(projectId, milestoneId);
+      if (!active) return;
       setComments(data);
-    } finally {
       setLoading(false);
     }
-  }
 
-  useEffect(() => {
-    loadComments();
+    void fetchComments();
+
+    return () => {
+      active = false;
+    };
   }, [projectId, milestoneId]);
 
   async function handleSubmit(event: FormEvent) {
