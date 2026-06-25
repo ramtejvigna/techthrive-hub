@@ -3,6 +3,7 @@
 import { RequireGuest } from "@/components/auth/auth-guard";
 import { ThemeToggleCompact } from "@/components/theme-toggle-compact";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 const features = [
   { code: "PRJ", label: "Project tracking", status: "active" },
@@ -86,14 +87,30 @@ export default function AuthLayout({
           </div>
         </motion.div>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="font-mono text-[10px] text-[var(--muted-light)]"
+          className="space-y-3"
         >
-          TechThrive Hub · build 2026.06 · all systems nominal
-        </motion.p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/docs"
+              className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] hover:underline"
+            >
+              Docs
+            </Link>
+            <Link
+              href="/plans"
+              className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent)] hover:underline"
+            >
+              Plans
+            </Link>
+          </div>
+          <p className="font-mono text-[10px] text-[var(--muted-light)]">
+            TechThrive Hub · build 2026.06 · all systems nominal
+          </p>
+        </motion.div>
       </div>
 
       {/* Right panel — form */}

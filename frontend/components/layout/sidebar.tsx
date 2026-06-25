@@ -2,10 +2,12 @@
 
 import {
   BlogIcon,
+  DocsIcon,
   HomeIcon,
   KanbanIcon,
   LogoutIcon,
   MailIcon,
+  PlansIcon,
   ProjectsIcon,
   YoutubeIcon,
 } from "@/components/icons/nav-icons";
@@ -23,10 +25,52 @@ const navItems: {
   label: string;
   code: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
+  match: (pathname: string) => boolean;
 }[] = [
-  { href: "/dashboard", label: "Home", code: "01", icon: HomeIcon },
-  { href: "/dashboard/projects", label: "Projects", code: "02", icon: ProjectsIcon },
-  { href: "/dashboard/kanban", label: "Kanban", code: "03", icon: KanbanIcon },
+  {
+    href: "/dashboard",
+    label: "Home",
+    code: "01",
+    icon: HomeIcon,
+    match: (pathname) => pathname === "/dashboard",
+  },
+  {
+    href: "/dashboard/projects",
+    label: "Projects",
+    code: "02",
+    icon: ProjectsIcon,
+    match: (pathname) => pathname.startsWith("/dashboard/projects"),
+  },
+  {
+    href: "/dashboard/kanban",
+    label: "Kanban",
+    code: "03",
+    icon: KanbanIcon,
+    match: (pathname) => pathname.startsWith("/dashboard/kanban"),
+  },
+];
+
+const contentItems: {
+  href: string;
+  label: string;
+  code: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  match: (pathname: string) => boolean;
+}[] = [
+  {
+    href: "/docs",
+    label: "Docs",
+    code: "04",
+    icon: DocsIcon,
+    match: (pathname) => pathname.startsWith("/docs"),
+  },
+  {
+    href: "/plans",
+    label: "Plans",
+    code: "05",
+    icon: PlansIcon,
+    match: (pathname) => pathname.startsWith("/plans"),
+  },
 ];
 
 const comingSoon = [
@@ -34,6 +78,63 @@ const comingSoon = [
   { label: "YouTube", icon: YoutubeIcon },
   { label: "Blog", icon: BlogIcon },
 ];
+
+type SidebarNavItem = {
+  href: string;
+  label: string;
+  code: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  match: (pathname: string) => boolean;
+};
+
+function SidebarNavLink({
+  item,
+  pathname,
+  index,
+}: {
+  item: SidebarNavItem;
+  pathname: string;
+  index: number;
+}) {
+  const active = item.match(pathname);
+  const Icon = item.icon;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.05 + index * 0.05, duration: 0.35 }}
+    >
+      <Link
+        href={item.href}
+        className={cn(
+          "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+          active
+            ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-fg)]"
+            : "text-[var(--sidebar-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--sidebar-fg)]",
+        )}
+      >
+        {active && (
+          <motion.span
+            layoutId="sidebar-indicator"
+            className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)]"
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          />
+        )}
+        <span className="font-mono text-[10px] text-[var(--muted-light)] group-hover:text-[var(--accent)]">
+          {item.code}
+        </span>
+        <Icon
+          className={cn(
+            "h-4 w-4 transition-colors",
+            active ? "text-[var(--accent)]" : "text-[var(--muted-light)]",
+          )}
+        />
+        <span>{item.label}</span>
+      </Link>
+    </motion.div>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -70,49 +171,19 @@ export function Sidebar() {
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
         <p className="tech-label px-3 pb-2 pt-1">Modules</p>
-        {navItems.map((item, index) => {
-          const active =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
-          const Icon = item.icon;
+        {navItems.map((item, index) => (
+          <SidebarNavLink key={item.href} item={item} pathname={pathname} index={index} />
+        ))}
 
-          return (
-            <motion.div
-              key={item.href}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.05 + index * 0.05, duration: 0.35 }}
-            >
-              <Link
-                href={item.href}
-                className={cn(
-                  "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                  active
-                    ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-fg)]"
-                    : "text-[var(--sidebar-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--sidebar-fg)]",
-                )}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="sidebar-indicator"
-                    className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[var(--accent)]"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <span className="font-mono text-[10px] text-[var(--muted-light)] group-hover:text-[var(--accent)]">
-                  {item.code}
-                </span>
-                <Icon
-                  className={cn(
-                    "h-4 w-4 transition-colors",
-                    active ? "text-[var(--accent)]" : "text-[var(--muted-light)]",
-                  )}
-                />
-                <span>{item.label}</span>
-              </Link>
-            </motion.div>
-          );
-        })}
+        <p className="tech-label px-3 pb-2 pt-5">Content</p>
+        {contentItems.map((item, index) => (
+          <SidebarNavLink
+            key={item.href}
+            item={item}
+            pathname={pathname}
+            index={navItems.length + index}
+          />
+        ))}
 
         <div className="pt-5">
           <p className="tech-label px-3 pb-2">Pipeline</p>

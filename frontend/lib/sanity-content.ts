@@ -1,6 +1,23 @@
+import { escapeHTML, toHTML } from "@portabletext/to-html";
+import { PortableTextBlock } from "sanity";
+
 import { client } from "@/sanity/lib/client";
 import { SanityDoc, SanityPlan } from "@/sanity/lib/types";
-import { toHTML } from "@portabletext/to-html";
+
+function portableTextToHtml(body: PortableTextBlock[]): string {
+  return toHTML(body, {
+    components: {
+      types: {
+        code: ({ value }) => {
+          const language =
+            typeof value.language === "string" ? ` class="language-${value.language}"` : "";
+          const code = typeof value.code === "string" ? escapeHTML(value.code) : "";
+          return `<pre><code${language}>${code}</code></pre>`;
+        },
+      },
+    },
+  });
+}
 
 export async function getAllDocs(): Promise<
   Array<{
@@ -34,7 +51,7 @@ export async function getAllDocs(): Promise<
     description: doc.description || "",
     tags: doc.tags || [],
     publishedAt: doc.publishedAt,
-    html: toHTML(doc.body),
+    html: portableTextToHtml(doc.body),
   }));
 }
 
@@ -64,7 +81,7 @@ export async function getDocBySlug(slug: string) {
     description: doc.description || "",
     tags: doc.tags || [],
     publishedAt: doc.publishedAt,
-    html: toHTML(doc.body),
+    html: portableTextToHtml(doc.body),
   };
 }
 
@@ -100,7 +117,7 @@ export async function getAllPlans(): Promise<
     status: plan.status,
     summary: plan.summary || "",
     publishedAt: plan.publishedAt,
-    html: toHTML(plan.body),
+    html: portableTextToHtml(plan.body),
   }));
 }
 
@@ -130,6 +147,6 @@ export async function getPlanBySlug(slug: string) {
     status: plan.status,
     summary: plan.summary || "",
     publishedAt: plan.publishedAt,
-    html: toHTML(plan.body),
+    html: portableTextToHtml(plan.body),
   };
 }

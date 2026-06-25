@@ -75,6 +75,10 @@ export const docType = defineType({
               },
             ],
           },
+          lists: [
+            { title: "Bullet", value: "bullet" },
+            { title: "Numbered", value: "number" },
+          ],
         },
         {
           type: "code",

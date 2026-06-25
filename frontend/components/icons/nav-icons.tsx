@@ -52,6 +52,29 @@ export function BlogIcon(props: IconProps) {
   );
 }
 
+export function DocsIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 4h8l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h1Z"
+      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 4v4h4M9 13h6M9 17h6" />
+    </svg>
+  );
+}
+
+export function PlansIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3" width="6" height="4" rx="1" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6M9 16h4" />
+    </svg>
+  );
+}
+
 export function LogoutIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
