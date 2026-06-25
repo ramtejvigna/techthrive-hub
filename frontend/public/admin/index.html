@@ -4,8 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TechThrive CMS</title>
+    <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
   </head>
   <body>
-    <script src="https://unpkg.com/decap-cms-app@^3.14.0/dist/decap-cms-app.js"></script>
+    <!-- Decap CMS requires React 18; Next.js app uses React 19, so load isolated UMD builds here. -->
+    <script
+      src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/decap-cms-app@3.14.1/dist/decap-cms-app.js"></script>
   </body>
 </html>
