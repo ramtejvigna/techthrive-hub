@@ -70,6 +70,8 @@ class Card(models.Model):
         default=Priority.MEDIUM,
     )
     due_date = models.DateField(null=True, blank=True)
+    column_entered_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
     position = models.PositiveIntegerField(default=0)
     project = models.ForeignKey(
         "projects.Project",

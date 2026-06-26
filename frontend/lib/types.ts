@@ -52,6 +52,8 @@ export interface KanbanCard {
   description: string;
   priority: CardPriority;
   due_date: string | null;
+  column_entered_at: string | null;
+  completed_at: string | null;
   position: number;
   column: string;
   column_id: string;

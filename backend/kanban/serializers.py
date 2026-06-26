@@ -23,6 +23,8 @@ class CardSerializer(serializers.ModelSerializer):
             "description",
             "priority",
             "due_date",
+            "column_entered_at",
+            "completed_at",
             "position",
             "column",
             "column_id",
@@ -34,7 +36,7 @@ class CardSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "milestone", "created_at", "updated_at")
+        read_only_fields = ("id", "milestone", "column_entered_at", "completed_at", "created_at", "updated_at")
 
     def validate_project(self, project):
         if project is None:

@@ -19,7 +19,7 @@ import {
   reorderColumns,
   resolveColumnId,
 } from "@/lib/kanban-dnd";
-import { getColumnTheme } from "@/lib/kanban-themes";
+import { getColumnTheme, isCompletedColumn } from "@/lib/kanban-themes";
 import type { Board, CardPriority, KanbanCard, KanbanColumn } from "@/lib/types";
 import {
   CollisionDetection,
@@ -342,6 +342,9 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
   const activeTheme = getColumnTheme(
     activeColumnForTheme ?? { id: "default", color: "#64748b" },
   );
+  const activeCompletedColumn = activeColumnForTheme
+    ? isCompletedColumn(activeColumnForTheme, columns)
+    : false;
   const totalCards = columns.reduce((n, c) => n + c.cards.length, 0);
   const columnIds = columns.map((col) => col.id);
 
@@ -382,6 +385,7 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
                     <KanbanColumnView
                       key={column.id}
                       column={column}
+                      allColumns={columns}
                       index={index}
                       onAddCard={openAddCard}
                       onCardClick={openEditCard}
@@ -402,6 +406,7 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
               <KanbanCardPreview
                 card={activeCard}
                 theme={activeTheme}
+                isCompletedColumn={activeCompletedColumn}
                 className="w-[248px] rotate-1 shadow-xl ring-2 ring-[var(--accent)]/15"
               />
             ) : activeColumn ? (

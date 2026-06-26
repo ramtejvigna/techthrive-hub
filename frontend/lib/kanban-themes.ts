@@ -94,3 +94,35 @@ export function formatDueLabel(dueDate: string | null): string | null {
   if (diff === 1) return "Due Tomorrow";
   return `Due in ${diff} Days`;
 }
+
+export function isCompletedColumn(
+  column: { id: string; name: string; position: number },
+  allColumns: { id: string; position: number }[],
+): boolean {
+  const name = column.name.toLowerCase().trim();
+  if (["done", "complete", "completed"].some((token) => name.includes(token))) {
+    return true;
+  }
+  const sorted = [...allColumns].sort((a, b) => a.position - b.position);
+  const index = sorted.findIndex((item) => item.id === column.id);
+  return index === sorted.length - 1 && sorted.length > 1;
+}
+
+export function formatCardStatusLabel(
+  card: {
+    due_date: string | null;
+    completed_at: string | null;
+    column_entered_at: string | null;
+  },
+  isCompleted: boolean,
+  formatDate: (date: string | null | undefined) => string,
+): string | null {
+  if (isCompleted) {
+    const completedAt = card.completed_at || card.column_entered_at;
+    if (completedAt) {
+      return `Completed ${formatDate(completedAt)}`;
+    }
+    return null;
+  }
+  return formatDueLabel(card.due_date);
+}

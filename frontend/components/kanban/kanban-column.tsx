@@ -2,7 +2,7 @@
 
 import { ColumnColorPicker } from "@/components/kanban/column-color-picker";
 import { KanbanCardItem } from "@/components/kanban/kanban-card";
-import { getColumnTheme } from "@/lib/kanban-themes";
+import { getColumnTheme, isCompletedColumn } from "@/lib/kanban-themes";
 import { stopDragPropagation } from "@/lib/use-sortable-click";
 import type { KanbanColumn as KanbanColumnType } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 interface KanbanColumnProps {
   column: KanbanColumnType;
+  allColumns: KanbanColumnType[];
   index: number;
   onAddCard: (columnId: string) => void;
   onCardClick: (cardId: string) => void;
@@ -59,6 +60,7 @@ export function KanbanColumnPreview({
 
 export function KanbanColumn({
   column,
+  allColumns,
   index,
   onAddCard,
   onCardClick,
@@ -66,6 +68,7 @@ export function KanbanColumn({
   onDeleteColumn,
 }: KanbanColumnProps) {
   const theme = getColumnTheme(column);
+  const completedColumn = isCompletedColumn(column, allColumns);
   const {
     attributes,
     listeners,
@@ -146,6 +149,7 @@ export function KanbanColumn({
                 key={card.id}
                 card={card}
                 theme={theme}
+                isCompletedColumn={completedColumn}
                 onClick={() => onCardClick(card.id)}
               />
             ))}

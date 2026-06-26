@@ -3,6 +3,7 @@ from django.db.models import Max
 
 from projects.models import Milestone, Project
 
+from .column_moves import apply_card_to_column, column_to_bucket_status
 from .models import Board, Card, Column
 
 
@@ -17,25 +18,6 @@ def get_default_todo_column(board: Board) -> Column | None:
             return column
 
     return columns[0]
-
-
-def column_to_bucket_status(column: Column, columns: list[Column]) -> str:
-    name = column.name.lower().strip()
-
-    if any(token in name for token in ("done", "complete", "completed")):
-        return Milestone.BucketStatus.DONE
-    if any(token in name for token in ("progress", "doing", "review", "active", "planning")):
-        return Milestone.BucketStatus.IN_PROGRESS
-    if any(token in name for token in ("to do", "todo", "not started", "backlog")):
-        return Milestone.BucketStatus.TODO
-
-    ordered = sorted(columns, key=lambda item: item.position)
-    index = next((i for i, item in enumerate(ordered) if item.id == column.id), 0)
-    if index == 0:
-        return Milestone.BucketStatus.TODO
-    if index == len(ordered) - 1:
-        return Milestone.BucketStatus.DONE
-    return Milestone.BucketStatus.IN_PROGRESS
 
 
 def apply_bucket_status_to_milestone(milestone: Milestone, column: Column) -> None:
@@ -71,9 +53,12 @@ def create_card_for_milestone(milestone: Milestone) -> Card | None:
     existing = Card.objects.filter(milestone=milestone).first()
     if existing:
         if existing.column.board_id != board.id:
-            existing.column = column
-            existing.position = _next_card_position(column)
-            existing.save(update_fields=["column", "position", "updated_at"])
+            apply_card_to_column(
+                existing,
+                column,
+                position=_next_card_position(column),
+                columns=list(board.columns.all()),
+            )
             sync_card_milestone_status(existing)
         return existing
 
@@ -84,6 +69,11 @@ def create_card_for_milestone(milestone: Milestone) -> Card | None:
         project=project,
         milestone=milestone,
         position=_next_card_position(column),
+    )
+    apply_card_to_column(
+        card,
+        column,
+        columns=list(board.columns.all()),
     )
     apply_bucket_status_to_milestone(milestone, column)
     return card

@@ -2,12 +2,12 @@
 
 import {
   PRIORITY_STYLES,
-  formatDueLabel,
+  formatCardStatusLabel,
   type ColumnTheme,
 } from "@/lib/kanban-themes";
 import { useSortableClickHandler } from "@/lib/use-sortable-click";
 import type { KanbanCard as KanbanCardType } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
@@ -15,12 +15,21 @@ import { motion } from "framer-motion";
 interface KanbanCardProps {
   card: KanbanCardType;
   theme: ColumnTheme;
+  isCompletedColumn?: boolean;
   onClick?: () => void;
 }
 
-function CardBody({ card, theme }: { card: KanbanCardType; theme: ColumnTheme }) {
-  const dueLabel = formatDueLabel(card.due_date);
-  const isOverdue = dueLabel?.includes("Past Due");
+function CardBody({
+  card,
+  theme,
+  isCompletedColumn = false,
+}: {
+  card: KanbanCardType;
+  theme: ColumnTheme;
+  isCompletedColumn?: boolean;
+}) {
+  const statusLabel = formatCardStatusLabel(card, isCompletedColumn, formatDate);
+  const isOverdue = !isCompletedColumn && statusLabel?.includes("Past Due");
   const priority = card.priority || "medium";
 
   return (
@@ -41,10 +50,19 @@ function CardBody({ card, theme }: { card: KanbanCardType; theme: ColumnTheme })
         </p>
       </div>
 
-      {dueLabel && (
+      {statusLabel && (
         <div className={cn("mt-2.5 flex items-center gap-1.5 text-xs", theme.cardMuted)}>
-          <span className={cn(isOverdue && "font-medium text-rose-500")}>{dueLabel}</span>
-          <span className="inline-block h-1 w-1 rounded-full bg-current opacity-50" />
+          <span
+            className={cn(
+              isOverdue && "font-medium text-rose-500",
+              isCompletedColumn && "font-medium text-emerald-600",
+            )}
+          >
+            {statusLabel}
+          </span>
+          {!isCompletedColumn ? (
+            <span className="inline-block h-1 w-1 rounded-full bg-current opacity-50" />
+          ) : null}
         </div>
       )}
 
@@ -77,10 +95,12 @@ function CardBody({ card, theme }: { card: KanbanCardType; theme: ColumnTheme })
 export function KanbanCardPreview({
   card,
   theme,
+  isCompletedColumn = false,
   className,
 }: {
   card: KanbanCardType;
   theme: ColumnTheme;
+  isCompletedColumn?: boolean;
   className?: string;
 }) {
   return (
@@ -92,12 +112,12 @@ export function KanbanCardPreview({
         className,
       )}
     >
-      <CardBody card={card} theme={theme} />
+      <CardBody card={card} theme={theme} isCompletedColumn={isCompletedColumn} />
     </div>
   );
 }
 
-export function KanbanCardItem({ card, theme, onClick }: KanbanCardProps) {
+export function KanbanCardItem({ card, theme, isCompletedColumn = false, onClick }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -133,7 +153,7 @@ export function KanbanCardItem({ card, theme, onClick }: KanbanCardProps) {
         isDragging && "pointer-events-none",
       )}
     >
-      <CardBody card={card} theme={theme} />
+      <CardBody card={card} theme={theme} isCompletedColumn={isCompletedColumn} />
     </motion.div>
   );
 }

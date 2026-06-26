@@ -57,6 +57,7 @@ class BoardViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["patch"], url_path="reorder")
     def reorder(self, request, pk=None):
+        from .column_moves import apply_card_to_column
         from .sync import sync_card_milestone_status
 
         board = self.get_object()
@@ -91,14 +92,19 @@ class BoardViewSet(viewsets.ModelViewSet):
                     str(c.id): c
                     for c in board.columns.all()
                 }
+                board_columns = list(column_map.values())
                 for item in data["cards"]:
                     card = cards.get(str(item["id"]))
                     column = column_map.get(str(item["column_id"]))
                     if card and column:
-                        card.column = column
-                        card.position = item["position"]
-                        card.save(update_fields=["column", "position", "updated_at"])
-                        if card.milestone_id:
+                        moved = card.column_id != column.id
+                        apply_card_to_column(
+                            card,
+                            column,
+                            position=item["position"],
+                            columns=board_columns,
+                        )
+                        if moved and card.milestone_id:
                             moved_milestone_cards.append(card)
 
             for card in moved_milestone_cards:
@@ -164,7 +170,13 @@ class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
                 id=project_id,
                 user=self.request.user,
             ).first()
+        card = serializer.instance
+        old_column_id = card.column_id
         card = serializer.save(project=project)
+        if card.column_id != old_column_id:
+            from .column_moves import apply_card_to_column
+
+            apply_card_to_column(card, card.column)
         if card.milestone_id:
             milestone = card.milestone
             milestone.title = card.title
@@ -177,6 +189,8 @@ class CardCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
+        from .column_moves import apply_card_to_column
+
         column = Column.objects.get(
             id=self.request.data.get("column"),
             board__user=self.request.user,
@@ -190,4 +204,9 @@ class CardCreateView(generics.CreateAPIView):
                 id=project_id,
                 user=self.request.user,
             ).first()
-        serializer.save(column=column, position=position, project=project)
+        card = serializer.save(column=column, position=position, project=project)
+        apply_card_to_column(
+            card,
+            column,
+            columns=list(column.board.columns.all()),
+        )
