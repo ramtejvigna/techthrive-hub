@@ -3,3 +3,7 @@
 db.sqlite3
 
 **/__pycache__
+# Local environment files: never commit real values (examples are fine)
+.env
+.env.*
+!.env.example
