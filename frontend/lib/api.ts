@@ -170,6 +170,12 @@ export const api = {
   deleteProject: (id: string) =>
     apiFetch<void>(`/api/projects/${id}/`, { method: "DELETE" }),
 
+  searchUsers: (query: string, projectId?: string) => {
+    const params = new URLSearchParams({ q: query });
+    if (projectId) params.set("project", projectId);
+    return apiFetch<User[]>(`/api/auth/users/?${params}`);
+  },
+
   addProjectMember: (projectId: string, email: string) =>
     apiFetch<User>(`/api/projects/${projectId}/members/`, {
       method: "POST",

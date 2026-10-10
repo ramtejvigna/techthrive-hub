@@ -136,6 +136,17 @@ exists aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OID
        --client-id-list sts.amazonaws.com \
        --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1 >/dev/null
 
+# GitHub may send the subject as repo:owner/repo:... or, in its newer format,
+# with immutable IDs (repo:owner@123/repo@456:...). Trust both.
+SUBJECTS='"repo:'"$GITHUB_REPO"':environment:'"$GITHUB_ENVIRONMENT"'"'
+GITHUB_OWNER_ID="${GITHUB_OWNER_ID:-$(gh api "repos/$GITHUB_REPO" --jq .owner.id 2>/dev/null || true)}"
+GITHUB_REPO_ID="${GITHUB_REPO_ID:-$(gh api "repos/$GITHUB_REPO" --jq .id 2>/dev/null || true)}"
+if [ -n "$GITHUB_OWNER_ID" ] && [ -n "$GITHUB_REPO_ID" ]; then
+  SUBJECTS="$SUBJECTS"', "repo:'"${GITHUB_REPO%%/*}@$GITHUB_OWNER_ID/${GITHUB_REPO#*/}@$GITHUB_REPO_ID"':environment:'"$GITHUB_ENVIRONMENT"'"'
+else
+  echo "Warning: could not look up GitHub IDs (install gh or set GITHUB_OWNER_ID/GITHUB_REPO_ID);"
+  echo "         the deploy role will only trust the legacy OIDC subject format."
+fi
 TRUST_POLICY='{
   "Version": "2012-10-17",
   "Statement": [{
@@ -144,7 +155,7 @@ TRUST_POLICY='{
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {"StringEquals": {
       "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-      "token.actions.githubusercontent.com:sub": "repo:'"$GITHUB_REPO"':environment:'"$GITHUB_ENVIRONMENT"'"
+      "token.actions.githubusercontent.com:sub": ['"$SUBJECTS"']
     }}
   }]
 }'

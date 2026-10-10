@@ -10,6 +10,11 @@ import {
 // every list and detail beneath it.
 export const queryKeys = {
   me: ["me"] as const,
+  userSearch: {
+    all: ["users", "search"] as const,
+    query: (query: string, projectId?: string) =>
+      [...queryKeys.userSearch.all, projectId ?? null, query] as const,
+  },
   dashboard: ["dashboard"] as const,
   projects: {
     all: ["projects"] as const,
@@ -51,6 +56,20 @@ export function createQueryClient(): QueryClient {
 
 export function useCurrentUser() {
   return useQuery({ queryKey: queryKeys.me, queryFn: api.me, staleTime: Infinity });
+}
+
+/** The backend ignores searches shorter than this. */
+export const USER_SEARCH_MIN_LENGTH = 2;
+
+/** Accounts whose email contains `query`, minus people already on `projectId`. */
+export function useUserSearch(query: string, projectId?: string) {
+  const trimmed = query.trim();
+  return useQuery({
+    queryKey: queryKeys.userSearch.query(trimmed.toLowerCase(), projectId),
+    queryFn: () => api.searchUsers(trimmed, projectId),
+    enabled: trimmed.length >= USER_SEARCH_MIN_LENGTH,
+    placeholderData: keepPreviousData,
+  });
 }
 
 export function useDashboardSummary() {
