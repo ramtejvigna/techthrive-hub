@@ -20,6 +20,12 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  other: {
+    // The app has its own dark theme. This stops the Dark Reader extension from
+    // restyling the page before React hydrates (it causes hydration warnings).
+    // Dark Reader only checks the tag exists; Next.js skips empty values.
+    "darkreader-lock": "true",
+  },
 };
 
 export default function RootLayout({
