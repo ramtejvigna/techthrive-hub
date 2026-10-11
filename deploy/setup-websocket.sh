@@ -15,7 +15,8 @@ set -euo pipefail
 export MSYS_NO_PATHCONV=1 # Git Bash: do not rewrite arguments that look like paths
 
 export AWS_PROFILE="${AWS_PROFILE:-techthrive}"
-export AWS_REGION="${AWS_REGION:-ap-south-1}"
+# London, next to the Neon database (every query crosses this link).
+export AWS_REGION="${AWS_REGION:-eu-west-2}"
 export AWS_DEFAULT_REGION="$AWS_REGION"
 export AWS_PAGER=""
 
@@ -28,6 +29,11 @@ exists() { "$@" >/dev/null 2>&1; }
 step() { printf '\n==> %s\n' "$*"; }
 
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+if ! exists aws lambda get-function --function-name "$APP"; then
+  echo "No Lambda function '$APP' in $AWS_REGION (profile $AWS_PROFILE)."
+  echo "Set AWS_REGION to the backend's region, e.g. AWS_REGION=eu-west-2 $0"
+  exit 1
+fi
 FUNCTION_URL="$(aws lambda get-function-url-config --function-name "$APP" --query FunctionUrl --output text)"
 EXEC_ROLE="$(aws lambda get-function-configuration --function-name "$APP" --query Role --output text)"
 EXEC_ROLE="${EXEC_ROLE##*/}"

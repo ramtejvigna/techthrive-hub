@@ -12,7 +12,8 @@ set -euo pipefail
 export MSYS_NO_PATHCONV=1 # Git Bash: do not rewrite arguments that look like paths
 
 export AWS_PROFILE="${AWS_PROFILE:-techthrive}"
-export AWS_REGION="${AWS_REGION:-ap-south-1}"
+# London, next to the Neon database (every query crosses this link).
+export AWS_REGION="${AWS_REGION:-eu-west-2}"
 export AWS_DEFAULT_REGION="$AWS_REGION"
 export AWS_PAGER=""
 

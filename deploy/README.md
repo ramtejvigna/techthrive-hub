@@ -14,7 +14,7 @@ Vercel (frontend)  ──HTTPS──▶  AWS Lambda + Function URL (Django)  ─
 | Database | Neon (free plan) | Free |
 | Backups | S3, nightly `pg_dump`, kept 30 days | Cents |
 
-**Database region:** the Neon project is in London (`eu-west-2`) and the backend is in Mumbai (`ap-south-1`), a choice made at setup time. Each query crosses that link, so warm API calls measured at launch were about **0.5–0.7 s** (`/api/projects/`, `/api/boards/`) and about **1.2 s** (`/api/dashboard/summary/`). If that feels slow, create a Neon project in the region nearest the backend, move the data with `pg_dump`/`pg_restore` (see *Restore a backup*), and update `DATABASE_URL` in Lambda and in GitHub.
+**Region:** everything on AWS (Lambda, ECR and the WebSocket API) is in London (`eu-west-2`), next to the Neon project. Every API request makes several database queries, so keep the backend and Neon in the same region. If you ever move one, move the other: create the new Neon project with `pg_dump`/`pg_restore` (see *Restore a backup*), then update `DATABASE_URL` in Lambda and in GitHub.
 
 **Trade-off:** after the app has been idle, the first request takes about 2–4 s (Lambda cold start plus Neon waking up). After that it's normal speed. Don't add a "keep warm" ping that touches the database: it would keep Neon awake and use up its free compute allowance. `/api/health/` never touches the database.
 
@@ -38,7 +38,7 @@ You need: Docker running, the AWS CLI with a `techthrive` profile (`aws configur
    ./deploy/bootstrap-aws.sh
    ```
 
-   It creates the ECR repository, the Lambda function with a public HTTPS Function URL, the S3 backup bucket, and a GitHub OIDC deploy role. It also builds and pushes the image, runs migrations against Neon, and ends by printing the backend URL and the values for the next two steps. It's safe to re-run. Optional overrides: `AWS_PROFILE` (default `techthrive`), `AWS_REGION` (default `ap-south-1`), `GITHUB_REPO`, `BACKUP_BUCKET`.
+   It creates the ECR repository, the Lambda function with a public HTTPS Function URL, the S3 backup bucket, and a GitHub OIDC deploy role. It also builds and pushes the image, runs migrations against Neon, and ends by printing the backend URL and the values for the next two steps. It's safe to re-run. Optional overrides: `AWS_PROFILE` (default `techthrive`), `AWS_REGION` (default `eu-west-2`), `GITHUB_REPO`, `BACKUP_BUCKET`.
 
 3. **GitHub**: in the repo's Settings → Environments, create **`backend-production`** and add the values below. (Not `production`: Vercel already made a `Production` environment, and GitHub environment names aren't case-sensitive.) This needs admin rights on the repo.
 
@@ -46,7 +46,7 @@ You need: Docker running, the AWS CLI with a `techthrive` profile (`aws configur
    |---|---|---|
    | Secret | `AWS_DEPLOY_ROLE_ARN` | Printed by the bootstrap |
    | Secret | `DATABASE_URL` | Same as `backend/.env.production` |
-   | Variable | `AWS_REGION` | e.g. `ap-south-1` |
+   | Variable | `AWS_REGION` | `eu-west-2` |
    | Variable | `BACKUP_BUCKET` | Printed by the bootstrap |
 
 4. **Vercel**: set `NEXT_PUBLIC_API_URL` to the backend URL, with no trailing slash, and redeploy. Keep the Sanity variables; Plans still uses Sanity.
