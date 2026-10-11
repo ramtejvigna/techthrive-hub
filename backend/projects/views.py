@@ -8,6 +8,8 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from notifications import services as notifications
+
 from .access import accessible_projects
 from .models import Milestone, MilestoneComment, PhaseUpdate, Project, ProjectPhase
 from .serializers import (
@@ -85,7 +87,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             )
         if user.id == project.user_id:
             raise ValidationError({"email": "That's the project owner."})
+        already_member = project.members.filter(pk=user.pk).exists()
         project.members.add(user)
+        if not already_member:
+            notifications.notify_project_member_added(project, user, request.user)
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["delete"], url_path=r"members/(?P<user_id>\d+)")
@@ -101,6 +106,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project.members.remove(member)
         if project.board_id:
             unassign_cards_without_access(project.board_id)
+        notifications.notify_project_member_removed(project, member, request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -161,7 +167,8 @@ class MilestoneCommentListCreateView(generics.ListCreateAPIView):
             project_id=self.kwargs["project_id"],
             project__in=accessible_projects(self.request.user),
         )
-        serializer.save(user=self.request.user, milestone=milestone)
+        comment = serializer.save(user=self.request.user, milestone=milestone)
+        notifications.notify_milestone_comment_mentions(comment, self.request.user)
 
 
 class MilestoneCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -229,7 +236,8 @@ class PhaseUpdateListCreateView(generics.ListCreateAPIView):
             project_id=self.kwargs["project_id"],
             project__in=accessible_projects(self.request.user),
         )
-        serializer.save(user=self.request.user, phase=phase)
+        update = serializer.save(user=self.request.user, phase=phase)
+        notifications.notify_phase_update_mentions(update, self.request.user)
 
 
 class PhaseUpdateDetailView(generics.DestroyAPIView):

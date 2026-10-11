@@ -30,6 +30,15 @@ def accessible_boards(user):
     return Board.objects.filter(Q(user=user) | Q(pk__in=shared_board_ids))
 
 
+def project_users(project):
+    """The project's owner plus its members."""
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    member_ids = Project.members.through.objects.filter(project=project).values("user_id")
+    return User.objects.filter(Q(pk=project.user_id) | Q(pk__in=member_ids)).order_by("email")
+
+
 def board_users(board):
     """Everyone who can see the board: its owner plus linked projects' members."""
     from django.contrib.auth import get_user_model

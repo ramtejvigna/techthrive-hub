@@ -6,6 +6,7 @@ import type {
   DashboardSummary,
   Doc,
   DocListItem,
+  NotificationList,
   KanbanCard,
   KanbanColumn,
   Milestone,
@@ -175,6 +176,20 @@ export const api = {
     if (projectId) params.set("project", projectId);
     return apiFetch<User[]>(`/api/auth/users/?${params}`);
   },
+
+  getNotifications: () => apiFetch<NotificationList>("/api/notifications/"),
+
+  markNotificationRead: (id: string) =>
+    apiFetch<void>(`/api/notifications/${id}/read/`, { method: "POST" }),
+
+  markAllNotificationsRead: () =>
+    apiFetch<void>("/api/notifications/read-all/", { method: "POST" }),
+
+  /** Where to open the notifications socket; `url` is null when realtime is off. */
+  getNotificationSocketTicket: () =>
+    apiFetch<{ url: string | null; ticket: string | null }>("/api/notifications/ws/ticket/", {
+      method: "POST",
+    }),
 
   addProjectMember: (projectId: string, email: string) =>
     apiFetch<User>(`/api/projects/${projectId}/members/`, {

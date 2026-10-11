@@ -21,8 +21,28 @@ services:
       - ./backend/.env
     environment:
       DATABASE_URL: postgres://techthrive:devpassword@db:5432/techthrive
+      # Inside compose the gateway is reachable by service name, not localhost,
+      # and it calls back to Django as "backend".
+      WEBSOCKET_MANAGEMENT_URL: http://ws:8001
+      ALLOWED_HOSTS: localhost,127.0.0.1,backend
     depends_on:
       - db
+
+  # Local stand-in for the API Gateway WebSocket API (realtime notifications).
+  ws:
+    build: ./backend
+    # Bypasses the image entrypoint so only the backend service runs migrations.
+    entrypoint: ["sh", "-c", "pip install -q -r requirements-dev.txt && exec python -u manage.py run_ws_gateway --backend http://backend:8000"]
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgres://techthrive:devpassword@db:5432/techthrive
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

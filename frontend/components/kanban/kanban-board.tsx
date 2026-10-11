@@ -40,6 +40,7 @@ import {
 import { SortableContext, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface KanbanBoardProps {
@@ -63,6 +64,23 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
   const [filters, setFilters] = useState<BoardFilters>(EMPTY_FILTERS);
   const [creatingInColumn, setCreatingInColumn] = useState<string | null>(null);
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+
+  // Notifications link to /dashboard/kanban/<board>?issue=<card>. Open that
+  // issue whenever the parameter changes, including while already on the board.
+  const router = useRouter();
+  const pathname = usePathname();
+  const issueParam = useSearchParams().get("issue");
+  const [handledIssueParam, setHandledIssueParam] = useState<string | null>(null);
+  if (issueParam !== handledIssueParam) {
+    setHandledIssueParam(issueParam);
+    if (issueParam) setOpenCardId(issueParam);
+  }
+
+  function closeIssue() {
+    setOpenCardId(null);
+    // Drop ?issue= so the same notification can open it again later.
+    if (issueParam) router.replace(pathname, { scroll: false });
+  }
   const [dialog, setDialog] = useState<SettingsDialog>(null);
   const [dialogValue, setDialogValue] = useState("");
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -532,7 +550,7 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
             columns={columns}
             members={board.members ?? []}
             currentUser={currentUser}
-            onClose={() => setOpenCardId(null)}
+            onClose={closeIssue}
             onUpdate={(patch) => handleUpdateCard(openCard.id, patch)}
             onDelete={openCard.milestone_id ? undefined : () => handleDeleteCard(openCard.id)}
             onCommentCountChange={(count) => handleCommentCountChange(openCard.id, count)}

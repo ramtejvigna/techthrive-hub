@@ -1,0 +1,4 @@
+-r requirements.txt
+
+# Only for the local WebSocket gateway (manage.py run_ws_gateway).
+aiohttp>=3.10,<4

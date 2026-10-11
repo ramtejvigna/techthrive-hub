@@ -61,6 +61,35 @@ You need: Docker running, the AWS CLI with a `techthrive` profile (`aws configur
 
    (Or edit it in the Lambda console: Configuration → Environment variables.) With sign-ups closed, only the very first user can register on an empty database.
 
+## Realtime notifications
+
+Notifications (assignments, comments, @mentions, status changes, project membership) are always saved and listed over the normal API. A WebSocket only tells the browser that a new one arrived, so it shows up immediately instead of on the next refresh.
+
+```
+Browser ──wss──▶ API Gateway WebSocket API ──$connect/$disconnect (HTTPS)──▶ Lambda (Django)
+   ▲                         │                                                    │
+   └─────── message ─────────┴──────────── POST /@connections/{id} ◀─────────────┘
+```
+
+Lambda Function URLs can't hold sockets open, so API Gateway holds them. It calls Django when a socket opens or closes, with no extra Lambda, and Django posts messages back through the gateway.
+
+**Setup**, once, after the bootstrap. From the repo root:
+
+```bash
+./deploy/setup-websocket.sh
+```
+
+It creates the `techthrive-backend-ws` WebSocket API, lets the Lambda role push to connections, and adds `WEBSOCKET_PUBLIC_URL`, `WEBSOCKET_MANAGEMENT_URL` and `WEBSOCKET_SHARED_SECRET` to the Lambda environment. Vercel needs no change, because the browser gets the socket URL from the backend. It's safe to re-run, and it keeps the existing secret.
+
+**Cost:** for a handful of users, cents. The API Gateway free tier covers 1M messages and 750k connection-minutes a month for the first year; after that it's $1 per million messages plus $0.25 per million connection-minutes. Each open tab is one connection.
+
+**Behaviour to know:**
+- **Visible tabs only.** Browsers keep a socket open only while the tab is visible. A hidden tab disconnects, so an idle tab doesn't keep Neon awake. Coming back reconnects and catches up.
+- **Reconnects.** API Gateway closes idle sockets after 10 minutes and every socket after 2 hours. The browser reconnects by itself, and each reconnect is one quick request to the backend.
+- **Fallback.** Without the three variables (or while the socket is down) the bell refreshes every minute instead.
+
+**Turn it off:** remove the three `WEBSOCKET_*` variables from the Lambda environment. Delete the API with `aws apigatewayv2 delete-api --api-id ID`.
+
 ## Everyday deploys
 
 Merging to `main` with changes under `backend/` runs **Deploy backend**. It builds the image, runs migrations, updates the Lambda and checks `/api/health/`. You can also run it by hand from the Actions tab. Migrations run *before* the code switch, so keep them backward compatible with the version that's live.

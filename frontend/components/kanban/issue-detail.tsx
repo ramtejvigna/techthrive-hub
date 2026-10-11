@@ -119,10 +119,12 @@ function LabelsEditor({
 function Comments({
   cardId,
   currentUser,
+  mentionCandidates,
   onCountChange,
 }: {
   cardId: string;
   currentUser: User | null;
+  mentionCandidates: User[];
   onCountChange: (count: number) => void;
 }) {
   const queryClient = useQueryClient();
@@ -167,8 +169,9 @@ function Comments({
           <MarkdownEditor
             value={body}
             onChange={setBody}
-            placeholder="Add a comment..."
+            placeholder="Add a comment... (@ to mention)"
             aria-label="Add a comment"
+            mentionCandidates={mentionCandidates}
             onSubmit={() => void submitComment()}
           />
           {body.trim() && (
@@ -235,6 +238,7 @@ export function IssueDetail({
   const [error, setError] = useState<string | null>(null);
 
   const column = columns.find((col) => col.id === card.column_id);
+  const mentionCandidates = members.filter((member) => member.id !== currentUser?.id);
   const isMilestone = Boolean(card.milestone_id);
 
   useEffect(() => {
@@ -382,6 +386,7 @@ export function IssueDetail({
                     onCancel={cancelDescription}
                     placeholder="Add a description..."
                     aria-label="Description"
+                    mentionCandidates={mentionCandidates}
                     className="[&_.md-content]:min-h-[9rem]"
                   />
                   <div className="flex flex-wrap items-center gap-2">
@@ -427,7 +432,12 @@ export function IssueDetail({
               )}
             </section>
 
-            <Comments cardId={card.id} currentUser={currentUser} onCountChange={onCommentCountChange} />
+            <Comments
+              cardId={card.id}
+              currentUser={currentUser}
+              mentionCandidates={mentionCandidates}
+              onCountChange={onCommentCountChange}
+            />
           </div>
 
           {/* Sidebar */}

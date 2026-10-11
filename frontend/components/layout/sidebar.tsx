@@ -11,6 +11,7 @@ import {
   ProjectsIcon,
   YoutubeIcon,
 } from "@/components/icons/nav-icons";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -168,6 +169,9 @@ export function Sidebar() {
             <p className="font-mono text-[10px] tracking-wider text-[var(--sidebar-muted)]">
               v1.0 · workspace
             </p>
+          </div>
+          <div className="ml-auto">
+            <NotificationCenter />
           </div>
         </motion.div>
       </div>

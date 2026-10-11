@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "kanban",
     "dashboard",
     "docs",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -124,6 +125,18 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": False,
 }
+
+# Realtime notifications. API Gateway holds the WebSockets in production; in
+# development `manage.py run_ws_gateway` stands in for it. Leave
+# WEBSOCKET_PUBLIC_URL empty to turn realtime delivery off (clients then poll).
+# Public URL browsers connect to, e.g. wss://ID.execute-api.REGION.amazonaws.com/prod
+WEBSOCKET_PUBLIC_URL = env("WEBSOCKET_PUBLIC_URL", default="")
+# Where Django posts messages, e.g. https://ID.execute-api.REGION.amazonaws.com/prod
+WEBSOCKET_MANAGEMENT_URL = env("WEBSOCKET_MANAGEMENT_URL", default="")
+# Sent by the gateway on connect/disconnect so only it can register sockets.
+WEBSOCKET_SHARED_SECRET = env("WEBSOCKET_SHARED_SECRET", default="")
+if WEBSOCKET_PUBLIC_URL and not WEBSOCKET_SHARED_SECRET:
+    raise ImproperlyConfigured("WEBSOCKET_SHARED_SECRET must be set when WEBSOCKET_PUBLIC_URL is.")
 
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",

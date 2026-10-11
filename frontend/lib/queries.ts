@@ -10,6 +10,7 @@ import {
 // every list and detail beneath it.
 export const queryKeys = {
   me: ["me"] as const,
+  notifications: ["notifications"] as const,
   userSearch: {
     all: ["users", "search"] as const,
     query: (query: string, projectId?: string) =>
@@ -56,6 +57,22 @@ export function createQueryClient(): QueryClient {
 
 export function useCurrentUser() {
   return useQuery({ queryKey: queryKeys.me, queryFn: api.me, staleTime: Infinity });
+}
+
+/** Without a live socket, check for new notifications this often. */
+const NOTIFICATION_POLL_MS = 60_000;
+
+/**
+ * The latest notifications and the unread count. While the WebSocket is
+ * connected it pushes new ones into this cache, so polling is only a
+ * fallback for when realtime is off or the socket is down.
+ */
+export function useNotifications({ poll }: { poll: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: api.getNotifications,
+    refetchInterval: poll ? NOTIFICATION_POLL_MS : false,
+  });
 }
 
 /** The backend ignores searches shorter than this. */
