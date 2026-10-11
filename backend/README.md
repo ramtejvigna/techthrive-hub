@@ -46,6 +46,15 @@ python manage.py runserver
 
 API runs at `http://localhost:8000`.
 
+6. Optional, for live notifications: run the local WebSocket gateway in a second terminal. It stands in for API Gateway, which production uses:
+
+```bash
+pip install -r requirements-dev.txt
+python manage.py run_ws_gateway
+```
+
+It listens on `ws://localhost:8001/` and needs the `WEBSOCKET_*` lines from `.env.example`. Without it, notifications still work and refresh every minute. `docker compose up` starts it as the `ws` service.
+
 ## Docker (PostgreSQL)
 
 From the repo root with Docker running:

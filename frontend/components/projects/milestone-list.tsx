@@ -19,6 +19,8 @@ interface MilestoneListProps {
   milestones: Milestone[];
   phases?: ProjectPhase[];
   currentUser: User | null;
+  /** People who can be @mentioned in milestone comments. */
+  mentionCandidates?: User[];
   boardLinked?: boolean;
   onCreate: (data: {
     title: string;
@@ -34,6 +36,7 @@ export function MilestoneList({
   milestones,
   phases = [],
   currentUser,
+  mentionCandidates,
   boardLinked = false,
   onCreate,
   onToggle,
@@ -203,6 +206,7 @@ export function MilestoneList({
                       projectId={projectId}
                       milestoneId={milestone.id}
                       currentUser={currentUser}
+                      mentionCandidates={mentionCandidates}
                     />
                   </div>
                 )}

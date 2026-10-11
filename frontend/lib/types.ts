@@ -163,6 +163,40 @@ export interface Board {
   updated_at: string;
 }
 
+export type NotificationKind =
+  | "card_assigned"
+  | "card_comment"
+  | "card_status"
+  | "mention"
+  | "project_added"
+  | "project_removed";
+
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  actor: User | null;
+  title: string;
+  message: string;
+  /** In-app path to open, e.g. /dashboard/kanban/<board>?issue=<card>. */
+  url: string;
+  project_id: string | null;
+  board_id: string | null;
+  card_id: string | null;
+  read: boolean;
+  created_at: string;
+}
+
+export interface NotificationList {
+  results: AppNotification[];
+  unread_count: number;
+}
+
+/** Sent over the WebSocket. */
+export interface NotificationSocketMessage {
+  type: "notification";
+  notification: AppNotification;
+}
+
 export interface DashboardSummary {
   active_projects: number;
   overdue_milestones: number;

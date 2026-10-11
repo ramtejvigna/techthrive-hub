@@ -21,7 +21,7 @@ import type {
 } from "@/lib/types";
 import { cn, formatDate, formatDateTime } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 const STATUS_OPTIONS: PhaseStatus[] = ["not_started", "in_progress", "done"];
 
@@ -30,6 +30,8 @@ interface PhasePanelProps {
   phase: ProjectPhase;
   milestones: Milestone[];
   currentUser: User | null;
+  /** People who can be @mentioned in updates. */
+  mentionCandidates?: User[];
   onPhaseUpdated: (phase: ProjectPhase) => void;
   onCreateMilestone: (data: {
     title: string;
@@ -43,6 +45,7 @@ export function PhasePanel({
   phase,
   milestones,
   currentUser,
+  mentionCandidates,
   onPhaseUpdated,
   onCreateMilestone,
 }: PhasePanelProps) {
@@ -62,6 +65,19 @@ export function PhasePanel({
   const [addingMilestone, setAddingMilestone] = useState(false);
 
   const notesDirty = notesDraft !== phase.notes;
+
+  // The phase card scrolls instead of growing; when a milestone is added,
+  // bring it into view (the list is sorted by date, so it may not be last).
+  const milestoneListRef = useRef<HTMLUListElement>(null);
+  const knownMilestoneIds = useRef(new Set(milestones.map((milestone) => milestone.id)));
+  useEffect(() => {
+    const added = milestones.find((milestone) => !knownMilestoneIds.current.has(milestone.id));
+    knownMilestoneIds.current = new Set(milestones.map((milestone) => milestone.id));
+    if (!added) return;
+    milestoneListRef.current
+      ?.querySelector(`[data-milestone-id="${added.id}"]`)
+      ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [milestones]);
 
   async function handleStatusChange(status: PhaseStatus) {
     if (status === phase.status) return;
@@ -237,12 +253,13 @@ export function PhasePanel({
       <section className="space-y-2">
         <p className="tech-label">Milestones · {milestones.length}</p>
         {milestones.length > 0 && (
-          <ul className="space-y-1.5">
+          <ul ref={milestoneListRef} className="space-y-1.5">
             {milestones.map((milestone) => {
               const status = milestone.bucket_status || (milestone.completed ? "done" : "todo");
               return (
                 <li
                   key={milestone.id}
+                  data-milestone-id={milestone.id}
                   className="flex items-center gap-3 rounded-lg border border-[var(--border)] px-3 py-2"
                 >
                   <span
@@ -306,8 +323,9 @@ export function PhasePanel({
             value={updateBody}
             onChange={setUpdateBody}
             onSubmit={() => void postUpdate()}
-            placeholder="Post an update on this phase..."
+            placeholder="Post an update on this phase... (@ to mention)"
             aria-label="Phase update"
+            mentionCandidates={mentionCandidates}
           />
           <Button
             type="submit"

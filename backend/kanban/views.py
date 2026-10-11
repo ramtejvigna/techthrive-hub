@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from notifications import services as notifications
 from projects.access import accessible_boards, accessible_projects
 
 from .models import Board, Card, CardComment, Column
@@ -82,6 +83,7 @@ class BoardViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         moved_milestone_cards: list[Card] = []
+        moved_cards: list[tuple[Card, Column, Column]] = []
 
         with transaction.atomic():
             if "columns" in data:
@@ -115,6 +117,7 @@ class BoardViewSet(viewsets.ModelViewSet):
                     column = column_map.get(str(item["column_id"]))
                     if card and column:
                         moved = card.column_id != column.id
+                        from_column = column_map.get(str(card.column_id))
                         apply_card_to_column(
                             card,
                             column,
@@ -123,9 +126,14 @@ class BoardViewSet(viewsets.ModelViewSet):
                         )
                         if moved and card.milestone_id:
                             moved_milestone_cards.append(card)
+                        if moved and from_column:
+                            moved_cards.append((card, from_column, column))
 
             for card in moved_milestone_cards:
                 sync_card_milestone_status(card)
+
+            for card, from_column, to_column in moved_cards:
+                notifications.notify_card_moved(card, request.user, from_column, to_column)
 
         board = self.get_queryset().get(pk=board.pk)
         return Response(BoardDetailSerializer(board, context={"request": request}).data)
@@ -188,6 +196,10 @@ class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
                 if project_id
                 else None
             )
+        previous = serializer.instance
+        previous_assignee_id = previous.assignee_id
+        previous_column = previous.column
+        previous_description = previous.description
         # Column changes go through apply_card_to_column so timestamps,
         # position and the linked milestone's status stay in sync.
         new_column = serializer.validated_data.pop("column", None)
@@ -206,6 +218,15 @@ class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
             milestone.title = card.title
             milestone.target_date = card.due_date
             milestone.save(update_fields=["title", "target_date", "updated_at"])
+
+        actor = self.request.user
+        if card.assignee_id and card.assignee_id != previous_assignee_id:
+            notifications.notify_card_assigned(card, actor)
+        elif card.column_id != previous_column.id:
+            # A newly assigned person doesn't also need to hear it moved.
+            notifications.notify_card_moved(card, actor, previous_column, card.column)
+        if card.description != previous_description:
+            notifications.notify_card_description_mentions(card, actor, previous_description)
 
 
 class CardCreateView(generics.CreateAPIView):
@@ -241,6 +262,8 @@ class CardCreateView(generics.CreateAPIView):
             column,
             columns=list(column.board.columns.all()),
         )
+        notifications.notify_card_assigned(card, self.request.user)
+        notifications.notify_card_description_mentions(card, self.request.user)
 
 
 class CardCommentListCreateView(generics.ListCreateAPIView):
@@ -260,7 +283,8 @@ class CardCommentListCreateView(generics.ListCreateAPIView):
             id=self.kwargs["card_id"],
             column__board__in=accessible_boards(self.request.user),
         )
-        serializer.save(user=self.request.user, card=card)
+        comment = serializer.save(user=self.request.user, card=card)
+        notifications.notify_card_comment(comment, self.request.user)
 
 
 class CardCommentDetailView(generics.DestroyAPIView):

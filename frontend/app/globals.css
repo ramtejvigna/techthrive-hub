@@ -311,6 +311,22 @@ body {
 }
 
 /* ── Markdown content (Tiptap editor + read-only view) ── */
+/* A slim, always-visible scrollbar for the project phase card. */
+.phase-card-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-gutter: stable;
+}
+
+/* @someone@example.com in comments (decorated by the MentionHighlight extension). */
+.md-content .mention {
+  border-radius: 0.25rem;
+  padding: 0 0.15rem;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-weight: 500;
+}
+
 .md-content {
   line-height: 1.6;
   overflow-wrap: anywhere;

@@ -13,12 +13,15 @@ interface MilestoneCommentsProps {
   projectId: string;
   milestoneId: string;
   currentUser: User | null;
+  /** People who can be @mentioned. */
+  mentionCandidates?: User[];
 }
 
 export function MilestoneComments({
   projectId,
   milestoneId,
   currentUser,
+  mentionCandidates,
 }: MilestoneCommentsProps) {
   const queryClient = useQueryClient();
   const commentsKey = queryKeys.projects.milestoneComments(projectId, milestoneId);
@@ -94,8 +97,9 @@ export function MilestoneComments({
           value={body}
           onChange={setBody}
           onSubmit={() => void submitComment()}
-          placeholder="Write a comment..."
+          placeholder="Write a comment... (@ to mention)"
           aria-label="Write a comment"
+          mentionCandidates={mentionCandidates}
           className="[&_.md-content]:min-h-[3rem]"
         />
         <Button

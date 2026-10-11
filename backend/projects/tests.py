@@ -133,6 +133,19 @@ class ProjectSharingTests(APITestCase):
         self.assertIsNone(card.assignee)
         self.assertEqual(self.client.get(f"/api/boards/{self.board.id}/").status_code, 404)
 
+    def test_user_search(self):
+        self.as_user(self.owner)
+        url = "/api/auth/users/"
+        emails = lambda **params: [u["email"] for u in self.client.get(url, params).json()]
+        self.assertEqual(emails(q="m"), [])  # too short
+        self.assertEqual(emails(q="EXAMPLE"), [self.member.email, self.outsider.email])
+        self.assertEqual(emails(q="mem"), [self.member.email])
+        self.assertEqual(len(emails(q="example", project="not-a-uuid")), 2)
+
+        self.add_member()
+        self.as_user(self.owner)
+        self.assertEqual(emails(q="example", project=self.project.id), [self.outsider.email])
+
     def test_member_cannot_remove_others(self):
         self.add_member()
         self.add_member(self.outsider)
