@@ -134,7 +134,7 @@ export default function ProjectDetailPage() {
     return (
       <>
         <PageHeader title="Project" back={BACK_TO_PROJECTS} />
-        <div className="px-6 pb-10 font-mono text-sm text-[var(--muted)] md:px-8">
+        <div className="mx-auto w-full max-w-[1400px] px-4 pb-10 font-mono text-sm text-[var(--muted)] md:px-6">
           loading...
         </div>
       </>
@@ -145,7 +145,7 @@ export default function ProjectDetailPage() {
     return (
       <>
         <PageHeader title="Project" back={BACK_TO_PROJECTS} />
-        <div className="px-6 pb-10 text-sm text-red-500 md:px-8">Project not found.</div>
+        <div className="mx-auto w-full max-w-[1400px] px-4 pb-10 text-sm text-red-500 md:px-6">Project not found.</div>
       </>
     );
   }
@@ -219,7 +219,7 @@ export default function ProjectDetailPage() {
           </DropdownMenu>
         }
       />
-      <div className="space-y-6 px-6 pb-10 md:px-8">
+      <div className="mx-auto w-full max-w-[1400px] space-y-6 px-4 pb-10 md:px-6">
         <Card>
           <CardTitle>Lifecycle</CardTitle>
           <CardDescription>

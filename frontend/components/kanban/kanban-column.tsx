@@ -92,7 +92,7 @@ export function KanbanColumnPreview({
   return (
     <div
       className={cn(
-        "flex flex-col rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] shadow-lg",
+        "flex flex-col rounded-[18px] border border-[var(--panel-border)] bg-[var(--panel)] shadow-lg",
         COLUMN_WIDTH,
         className,
       )}
@@ -238,11 +238,11 @@ export function KanbanColumn({
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.3, delay: index * 0.04, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "group flex shrink-0 flex-col rounded-lg border transition-colors",
+        "group flex shrink-0 flex-col rounded-[18px] border transition-colors",
         COLUMN_WIDTH,
         overLimit
           ? "border-red-500/30 bg-red-500/[0.06]"
-          : "border-[var(--border)] bg-[var(--surface-muted)]",
+          : "border-[var(--panel-border)] bg-[var(--panel)] shadow-[var(--panel-shadow)]",
         isOver && !isDragging && "border-[var(--accent)]/50",
         isDragging && "pointer-events-none",
       )}

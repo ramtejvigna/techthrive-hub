@@ -21,7 +21,7 @@ export default async function PlansPage() {
         title="Plans"
         description="Public roadmap and implementation plans."
       />
-      <section className="px-6 pb-10 md:px-8">
+      <section className="mx-auto w-full max-w-[1400px] px-4 pb-10 md:px-6">
         {plans.length === 0 ? (
           <ContentEmptyState
             title="No plans yet"

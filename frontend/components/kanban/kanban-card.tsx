@@ -23,7 +23,7 @@ interface KanbanCardProps {
 }
 
 const CARD_CLASS =
-  "rounded-md border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[0_1px_1px_rgba(9,30,66,0.12),0_0_1px_rgba(9,30,66,0.2)]";
+  "rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[0_1px_2px_rgba(17,18,22,0.06)]";
 
 function CardBody({
   card,

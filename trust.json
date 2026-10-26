@@ -1,0 +1,15 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": { "Federated": "arn:aws:iam::379739721051:oidc-provider/token.actions.githubusercontent.com" },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": { "StringEquals": {
+      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+      "token.actions.githubusercontent.com:sub": [
+        "repo:techthrive46/techthrive-dash:environment:backend-production",
+        "repo:techthrive46@289648729/techthrive-dash@1257421062:environment:backend-production"
+      ]
+    }}
+  }]
+}

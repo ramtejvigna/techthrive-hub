@@ -369,12 +369,12 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
 
   if (loading) {
     return (
-      <div className="px-6 pb-10 pt-8 md:px-8">
+      <div className="px-4 pb-10 pt-6 md:px-6">
         <Skeleton className="mb-3 h-4 w-40" />
         <Skeleton className="mb-6 h-9 w-72" />
         <div className="flex gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-80 w-[280px] shrink-0 rounded-lg" />
+            <Skeleton key={i} className="h-80 w-[280px] shrink-0 rounded-[22px]" />
           ))}
         </div>
       </div>
@@ -383,7 +383,7 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
 
   if (!board) {
     return (
-      <p className="px-6 py-10 text-sm text-red-500 md:px-8">Board not found.</p>
+      <p className="px-4 py-10 text-sm text-red-500 md:px-6">Board not found.</p>
     );
   }
 
@@ -401,7 +401,7 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
     dialog?.kind === "wip" ? columns.find((col) => col.id === dialog.columnId) : undefined;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-4 md:px-8">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6">
       <BoardHeader
         title={board.title}
         boardKey={board.key}
@@ -466,7 +466,7 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
                   onClick={() => openDialog({ kind: "add-column" })}
                   aria-label="Add column"
                   title="Add column"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-[var(--border-strong)] text-lg text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:bg-[var(--accent-light)] hover:text-[var(--accent)]"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--border-strong)] text-lg text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:bg-[var(--accent-light)] hover:text-[var(--accent)]"
                 >
                   +
                 </button>

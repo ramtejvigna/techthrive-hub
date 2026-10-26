@@ -1,16 +1,93 @@
 "use client";
 
-import { PageHeader } from "@/components/layout/page-header";
+import { Sparkline } from "@/components/dashboard/sparkline";
+import { StatTile } from "@/components/dashboard/stat-tile";
+import { KanbanIcon, ProjectsIcon } from "@/components/icons/nav-icons";
+import { PAGE_CONTAINER, PageHeader } from "@/components/layout/page-header";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import type { Board } from "@/lib/types";
+import { cn, formatDate } from "@/lib/utils";
+import { motion } from "framer-motion";
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+
+function BoardCard({ board, index }: { board: Board; index: number }) {
+  const columns = board.column_count ?? 0;
+  const cards = board.card_count ?? 0;
+  const linked = board.linked_projects ?? [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: index * 0.04, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -2, transition: { duration: 0.15 } }}
+      className="h-full"
+    >
+      <Link
+        href={`/dashboard/kanban/${board.id}`}
+        className="panel flex h-full flex-col p-5 transition-colors hover:border-[var(--border-strong)]"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] font-mono text-[11px] font-bold text-[var(--ink-fg)] ring-1 ring-white/10">
+            {board.key.slice(0, 3)}
+          </span>
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-semibold tracking-tight">{board.title}</h3>
+            <p className="text-[11px] text-[var(--muted)]">Updated {formatDate(board.updated_at)}</p>
+          </div>
+        </div>
+
+        {/* One segment per workflow column; the last (done) column is green. */}
+        <div className="mt-5 flex h-2 gap-1" aria-hidden>
+          {columns === 0 ? (
+            <span className="flex-1 rounded-full bg-[var(--surface-subtle)]" />
+          ) : (
+            Array.from({ length: Math.min(columns, 10) }).map((_, i, all) => (
+              <span
+                key={i}
+                className={cn(
+                  "flex-1 rounded-full",
+                  i === all.length - 1 ? "bg-emerald-500" : "bg-[var(--accent)]",
+                )}
+                style={{ opacity: i === all.length - 1 ? 1 : 0.3 + (i / all.length) * 0.6 }}
+              />
+            ))
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center gap-4 text-xs">
+          <span>
+            <span className="font-semibold tabular-nums">{cards}</span>{" "}
+            <span className="text-[var(--muted)]">ticket{cards === 1 ? "" : "s"}</span>
+          </span>
+          <span>
+            <span className="font-semibold tabular-nums">{columns}</span>{" "}
+            <span className="text-[var(--muted)]">column{columns === 1 ? "" : "s"}</span>
+          </span>
+        </div>
+
+        <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
+          {linked.length === 0 ? (
+            <span className="text-[11px] text-[var(--muted-light)]">Not linked to a project</span>
+          ) : (
+            linked.map((project) => (
+              <span key={project.id} className="chip py-0.5 text-[11px]">
+                <ProjectsIcon className="h-3 w-3" />
+                {project.name}
+              </span>
+            ))
+          )}
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
 
 export default function KanbanListPage() {
   const [boards, setBoards] = useState<Board[]>([]);
@@ -42,61 +119,113 @@ export default function KanbanListPage() {
     }
   }
 
+  const stats = useMemo(() => {
+    const cards = boards.reduce((n, b) => n + (b.card_count ?? 0), 0);
+    return {
+      cards,
+      columns: boards.reduce((n, b) => n + (b.column_count ?? 0), 0),
+      linked: boards.filter((b) => (b.linked_projects ?? []).length > 0).length,
+      average: boards.length ? Math.round(cards / boards.length) : 0,
+    };
+  }, [boards]);
+
   return (
     <>
       <PageHeader
         title="Kanban"
         description="Organize work with drag-and-drop boards."
-        actions={<Button onClick={() => setModalOpen(true)}>+ New Board</Button>}
+        actions={<Button onClick={() => setModalOpen(true)}>+ New board</Button>}
       />
-      <div className="px-6 pb-10 md:px-8">
+      <div className={cn(PAGE_CONTAINER, "pb-12")}>
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-28" />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-32 rounded-[22px]" />
+              ))}
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-56 rounded-[22px]" />
+              ))}
+            </div>
+          </>
         ) : boards.length === 0 ? (
           <FadeIn>
-            <div className="tech-frame flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--surface)] py-20 text-center">
-              <p className="font-mono text-xs uppercase tracking-widest text-[var(--accent)]">
-                // empty_state
+            <div className="panel flex flex-col items-center justify-center border-dashed py-20 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--ink)] text-[var(--ink-fg)]">
+                <KanbanIcon className="h-5 w-5" />
+              </span>
+              <p className="mt-4 text-lg font-semibold">No boards yet</p>
+              <p className="mt-1 max-w-sm text-sm text-[var(--muted)]">
+                Create a board and it starts with a set of default columns.
               </p>
-              <p className="mt-2 text-lg font-semibold">No boards found</p>
-              <p className="mt-1 max-w-sm font-mono text-xs text-[var(--muted)]">
-                deploy a kanban board with default columns
-              </p>
-              <Button className="mt-6 font-mono text-xs uppercase tracking-wider" onClick={() => setModalOpen(true)}>
-                + new_board()
+              <Button className="mt-6" onClick={() => setModalOpen(true)}>
+                + New board
               </Button>
             </div>
           </FadeIn>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {boards.map((board, index) => (
-              <Link key={board.id} href={`/dashboard/kanban/${board.id}`}>
-                <Card hover delay={index * 0.06}>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded bg-[var(--accent)] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
-                      {board.key}
-                    </span>
-                    <CardTitle>{board.title}</CardTitle>
-                  </div>
-                  <CardDescription>
-                    {board.column_count ?? 0} columns · {board.card_count ?? 0} tickets
-                  </CardDescription>
-                  <div className="mt-4 flex gap-1">
-                    {Array.from({ length: Math.min(board.column_count ?? 3, 5) }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="h-0.5 flex-1 rounded-full bg-[var(--accent)]/30"
-                      />
-                    ))}
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <StatTile
+                tone="ink"
+                label="Boards"
+                value={boards.length}
+                icon={<KanbanIcon className="h-3.5 w-3.5" />}
+                note={`${stats.linked} linked to projects`}
+              />
+              <StatTile
+                tone="tint"
+                label="Tickets"
+                value={stats.cards}
+                delay={0.04}
+                icon={
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <rect x="4" y="5" width="16" height="14" rx="2" />
+                    <path strokeLinecap="round" d="M8 10h8M8 14h5" />
+                  </svg>
+                }
+                aside={
+                  <Sparkline
+                    values={boards.map((b) => b.card_count ?? 0)}
+                    width={96}
+                    height={32}
+                    className="text-[var(--tint-blue-fg)]"
+                  />
+                }
+                note="across all boards"
+              />
+              <StatTile
+                label="Columns"
+                value={stats.columns}
+                delay={0.08}
+                icon={<KanbanIcon className="h-3.5 w-3.5" />}
+                note="workflow stages in total"
+              />
+              <StatTile
+                label="Avg. per board"
+                value={stats.average}
+                delay={0.12}
+                icon={
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" />
+                  </svg>
+                }
+                note="tickets on each board"
+              />
+            </div>
+
+            <div className="mt-8 flex items-center justify-between">
+              <h2 className="text-sm font-semibold">All boards</h2>
+              <span className="text-xs text-[var(--muted)]">{boards.length} total</span>
+            </div>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {boards.map((board, index) => (
+                <BoardCard key={board.id} board={board} index={index} />
+              ))}
+            </div>
+          </>
         )}
       </div>
 

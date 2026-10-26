@@ -41,7 +41,7 @@ export default async function PlanDetailPage({ params }: PageProps) {
           </Link>
         }
       />
-      <article className="mx-auto w-full px-6 pb-10 md:px-8">
+      <article className="mx-auto w-full max-w-[1400px] px-4 pb-10 md:px-6">
         <div
           className={`p-6 ${portableTextClassName}`}
           dangerouslySetInnerHTML={{ __html: plan.html }}
