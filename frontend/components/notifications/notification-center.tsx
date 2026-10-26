@@ -13,6 +13,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
+const PANEL_WIDTH = 380;
+
 const TOAST_DURATION_MS = 6000;
 const MAX_TOASTS = 3;
 
@@ -104,14 +106,17 @@ function NotificationCenterInner() {
   const [toasts, setToasts] = useState<AppNotification[]>([]);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [panelPosition, setPanelPosition] = useState({ top: 12, left: 256 });
+  const [panelPosition, setPanelPosition] = useState({ top: 72, left: 12 });
 
   function togglePanel() {
-    // Open just right of the sidebar, level with the bell.
+    // Drop down below the bell, right-aligned to it and kept inside the viewport.
     const rect = buttonRef.current?.getBoundingClientRect();
-    const sidebar = buttonRef.current?.closest("aside")?.getBoundingClientRect();
     if (rect) {
-      setPanelPosition({ top: Math.max(12, rect.top - 8), left: (sidebar?.right ?? rect.right) + 8 });
+      const width = Math.min(PANEL_WIDTH, window.innerWidth - 24);
+      setPanelPosition({
+        top: rect.bottom + 8,
+        left: Math.max(12, Math.min(rect.right - width, window.innerWidth - width - 12)),
+      });
     }
     setOpen((value) => !value);
   }
@@ -191,7 +196,7 @@ function NotificationCenterInner() {
         onClick={togglePanel}
         aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}
         aria-expanded={open}
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--sidebar-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--sidebar-fg)]"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
       >
         <BellIcon className="h-[18px] w-[18px]" />
         {unreadCount > 0 && (
@@ -210,11 +215,11 @@ function NotificationCenterInner() {
                 style={{ top: panelPosition.top, left: panelPosition.left }}
                 role="dialog"
                 aria-label="Notifications"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.15 }}
-                className="fixed z-[100] flex max-h-[75vh] w-[380px] max-w-[calc(100vw-272px)] flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+                className="fixed z-[100] flex max-h-[75vh] w-[380px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-[18px] border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
               >
                 <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
                   <div>

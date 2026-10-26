@@ -106,18 +106,22 @@ export function BoardHeader({
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className="pb-4 pt-6"
     >
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-[var(--muted)]">
-        <Link href="/dashboard/kanban" className="hover:text-[var(--accent)] hover:underline">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[var(--muted)]">
+        <Link href="/dashboard" className="transition-colors hover:text-[var(--foreground)]">
+          TechThrive
+        </Link>
+        <span className="text-[var(--muted-light)]" aria-hidden>/</span>
+        <Link href="/dashboard/kanban" className="transition-colors hover:text-[var(--foreground)]">
           Boards
         </Link>
-        <span aria-hidden>/</span>
+        <span className="text-[var(--muted-light)]" aria-hidden>/</span>
         <span className="truncate text-[var(--foreground)]">{title}</span>
       </nav>
 
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[var(--accent)] font-mono text-[11px] font-bold text-white"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] font-mono text-[11px] font-bold text-[var(--ink-fg)] ring-1 ring-white/10"
             aria-hidden
           >
             {boardKey.slice(0, 3)}
@@ -131,26 +135,26 @@ export function BoardHeader({
               onKeyDown={handleTitleKeyDown}
               disabled={saving}
               maxLength={120}
-              className="w-full max-w-xl rounded-md border border-[var(--accent)]/40 bg-[var(--surface)] px-2 py-0.5 text-2xl font-semibold tracking-tight text-[var(--foreground)] outline-none ring-2 ring-[var(--accent)]/20"
+              className="w-full max-w-xl rounded-md border border-[var(--accent)]/40 bg-[var(--surface)] px-2 py-0.5 text-3xl font-semibold tracking-tight text-[var(--foreground)] outline-none ring-2 ring-[var(--accent)]/20"
               aria-label="Board title"
             />
           ) : (
             <button
               type="button"
               onClick={onStartEditTitle}
-              className="min-w-0 truncate rounded-md text-left text-2xl font-semibold tracking-tight text-[var(--foreground)] transition-colors hover:text-[var(--accent)]"
+              className="min-w-0 truncate rounded-md text-left text-3xl font-semibold tracking-tight text-[var(--foreground)] transition-colors hover:text-[var(--accent)]"
               title="Click to rename board"
             >
               {title}
             </button>
           )}
-          <span className="shrink-0 rounded bg-[var(--surface-hover)] px-1.5 py-0.5 font-mono text-[11px] font-medium text-[var(--muted)]">
+          <span className="chip shrink-0 py-1 font-mono text-[11px]">
             {boardKey}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button onClick={onCreateIssue} className="px-3 py-1.5">
+          <Button onClick={onCreateIssue}>
             + Create
           </Button>
           <DropdownMenu>
@@ -210,10 +214,10 @@ function ToggleChip({
       aria-pressed={active}
       title={title}
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-colors",
+        "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors",
         active
-          ? "bg-[var(--accent-light)] text-[var(--accent)] ring-1 ring-[var(--accent)]/30"
-          : "text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
+          ? "border-transparent bg-[var(--ink)] text-[var(--ink-fg)]"
+          : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)]",
       )}
     >
       {children}
@@ -248,10 +252,10 @@ function MultiSelectFilter<T extends string>({
         variant="bare"
         aria-label={`Filter by ${label.toLowerCase()}`}
         className={cn(
-          "h-8 gap-1 rounded-md px-2.5 text-sm font-medium",
+          "h-8 gap-1 rounded-full border px-3 text-[13px] font-medium",
           selected.length > 0
-            ? "bg-[var(--accent-light)] text-[var(--accent)] ring-1 ring-[var(--accent)]/30"
-            : "text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
+            ? "border-transparent bg-[var(--ink)] text-[var(--ink-fg)]"
+            : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted)] hover:text-[var(--foreground)]",
         )}
       >
         {label}
@@ -313,7 +317,7 @@ export function BoardToolbar({
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
           placeholder="Search board"
-          className="h-8 w-48 rounded-md border border-[var(--border-strong)] bg-[var(--surface)] pl-8 pr-2 text-sm text-[var(--foreground)] outline-none transition-all placeholder:text-[var(--muted-light)] focus:w-64 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15"
+          className="h-9 w-52 rounded-full border border-[var(--border)] bg-[var(--surface)] pl-8 pr-3 text-sm text-[var(--foreground)] outline-none transition-all placeholder:text-[var(--muted-light)] focus:w-64 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/15"
         />
       </label>
 
@@ -379,7 +383,7 @@ export function BoardToolbar({
           <button
             type="button"
             onClick={() => onChange(EMPTY_FILTERS)}
-            className="h-8 rounded-md px-2.5 text-sm font-medium text-[var(--accent)] hover:bg-[var(--accent-light)]"
+            className="h-8 rounded-full px-3 text-[13px] font-medium text-[var(--accent)] hover:bg-[var(--accent-light)]"
           >
             Clear filters
           </button>
