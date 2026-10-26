@@ -18,7 +18,7 @@ export function Card({
   children,
 }: CardProps) {
   const baseClass = cn(
-    "tech-card rounded-xl p-5",
+    "tech-card rounded-[22px] p-5",
     hover && "cursor-pointer",
     className,
   );
@@ -61,7 +61,7 @@ export function CardDescription({
 }: HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("mt-0.5 font-mono text-xs text-[var(--muted)]", className)}
+      className={cn("mt-0.5 text-xs text-[var(--muted)]", className)}
       {...props}
     />
   );
