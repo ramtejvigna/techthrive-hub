@@ -27,6 +27,7 @@ from .serializers import (
 def annotated_cards():
     return (
         Card.objects.select_related("column__board", "project", "milestone", "assignee")
+        .prefetch_related("dependencies")
         .annotate(comment_count=Count("comments"))
         # The aggregate drops Meta.ordering, so restore it explicitly.
         .order_by("position")

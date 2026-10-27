@@ -94,6 +94,11 @@ export type CardPriority = "lowest" | "low" | "medium" | "high" | "highest";
 
 export type IssueType = "task" | "story" | "bug";
 
+export interface ChecklistItem {
+  text: string;
+  done: boolean;
+}
+
 export interface KanbanCard {
   id: string;
   number: number | null;
@@ -101,6 +106,12 @@ export interface KanbanCard {
   issue_type: IssueType;
   title: string;
   description: string;
+  objective: string;
+  requirements: string;
+  subtasks: ChecklistItem[];
+  acceptance_criteria: ChecklistItem[];
+  /** IDs of issues on the same board that must be done first. */
+  dependencies: string[];
   priority: CardPriority;
   due_date: string | null;
   story_points: number | null;

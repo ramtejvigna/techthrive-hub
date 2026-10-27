@@ -16,6 +16,7 @@ import { resolveColumnColor } from "@/lib/kanban-themes";
 import type {
   CardComment,
   CardPriority,
+  ChecklistItem,
   IssueType,
   KanbanCard,
   KanbanColumn,
@@ -113,6 +114,383 @@ function LabelsEditor({
         className="min-w-[80px] flex-1 bg-transparent px-1 py-0.5 text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted-light)]"
       />
     </div>
+  );
+}
+
+function SectionHeading({ title, aside }: { title: string; aside?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <h3 className="text-sm font-semibold text-[var(--foreground)]">{title}</h3>
+      {aside}
+    </div>
+  );
+}
+
+/** Click-to-edit markdown block, used for requirements and free-form notes. */
+function MarkdownSection({
+  title,
+  value,
+  placeholder,
+  mentionCandidates,
+  onSave,
+}: {
+  title: string;
+  value: string;
+  placeholder: string;
+  mentionCandidates: User[];
+  onSave: (markdown: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  function startEditing() {
+    setDraft(value);
+    setEditing(true);
+  }
+
+  async function commit() {
+    await onSave(draft.trim());
+    setEditing(false);
+  }
+
+  function cancel() {
+    setDraft(value);
+    setEditing(false);
+  }
+
+  return (
+    <section>
+      <SectionHeading title={title} />
+      {editing ? (
+        <div className="mt-2 space-y-2">
+          <MarkdownEditor
+            autoFocus
+            value={draft}
+            onChange={setDraft}
+            onSubmit={() => void commit()}
+            onCancel={cancel}
+            placeholder={placeholder}
+            aria-label={title}
+            mentionCandidates={mentionCandidates}
+            className="[&_.md-content]:min-h-[7rem]"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={commit} className="px-3 py-1.5 text-xs">
+              Save
+            </Button>
+            <Button variant="ghost" onClick={cancel} className="px-3 py-1.5 text-xs">
+              Cancel
+            </Button>
+            <MarkdownHint />
+          </div>
+        </div>
+      ) : (
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label={`Edit ${title.toLowerCase()}`}
+          onClick={(e) => {
+            // Let links and checklist boxes in the rendered markdown work normally.
+            if ((e.target as HTMLElement).closest("a, input, label")) return;
+            startEditing();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.target === e.currentTarget) {
+              e.preventDefault();
+              startEditing();
+            }
+          }}
+          className="mt-2 cursor-text rounded-md px-2 py-2 transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/30"
+        >
+          {value ? (
+            <MarkdownView
+              value={value}
+              onChange={(markdown) => void onSave(markdown)}
+              className="text-[var(--foreground)]"
+            />
+          ) : (
+            <p className="text-sm text-[var(--muted-light)]">{placeholder}</p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ObjectiveField({ value, onSave }: { value: string; onSave: (value: string) => void }) {
+  const [draft, setDraft] = useState(value);
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    setDraft(value);
+  }
+
+  function commit() {
+    const trimmed = draft.trim();
+    if (trimmed !== value) onSave(trimmed);
+  }
+
+  return (
+    <section>
+      <SectionHeading title="Objective" />
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            setDraft(value);
+            e.currentTarget.blur();
+          }
+        }}
+        rows={2}
+        placeholder="What outcome should this ticket achieve?"
+        aria-label="Objective"
+        className={`${FIELD_CLASS} mt-2 resize-none py-2 [field-sizing:content]`}
+      />
+    </section>
+  );
+}
+
+function ChecklistEditor({
+  title,
+  items: savedItems,
+  addPlaceholder,
+  onChange,
+}: {
+  title: string;
+  items: ChecklistItem[];
+  addPlaceholder: string;
+  onChange: (items: ChecklistItem[]) => void;
+}) {
+  // Local copy so toggles and edits feel instant while the save round-trips.
+  const [items, setItems] = useState(savedItems);
+  const [draft, setDraft] = useState("");
+
+  const [syncedItems, setSyncedItems] = useState(savedItems);
+  if (savedItems !== syncedItems) {
+    setSyncedItems(savedItems);
+    setItems(savedItems);
+  }
+
+  function commit(next: ChecklistItem[]) {
+    setItems(next);
+    onChange(next);
+  }
+
+  function add() {
+    const text = draft.trim();
+    if (!text) return;
+    commit([...items, { text, done: false }]);
+    setDraft("");
+  }
+
+  function updateText(index: number, text: string) {
+    const trimmed = text.trim();
+    if (trimmed === items[index].text) return;
+    if (!trimmed) {
+      commit(items.filter((_, i) => i !== index));
+      return;
+    }
+    commit(items.map((item, i) => (i === index ? { ...item, text: trimmed } : item)));
+  }
+
+  const doneCount = items.filter((item) => item.done).length;
+  const percent = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+
+  return (
+    <section>
+      <SectionHeading
+        title={title}
+        aside={
+          items.length > 0 && (
+            <span className="font-mono text-[11px] text-[var(--muted)]">
+              {doneCount}/{items.length}
+            </span>
+          )
+        }
+      />
+      {items.length > 0 && (
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-[var(--surface-subtle)]">
+          <div
+            className="h-full rounded-full bg-[var(--accent)] transition-[width]"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+      )}
+      <ul className="mt-2 space-y-0.5">
+        {items.map((item, index) => (
+          <li
+            key={`${index}-${item.text}`}
+            className="group flex items-start gap-2 rounded-md px-1 hover:bg-[var(--surface-hover)]"
+          >
+            <input
+              type="checkbox"
+              checked={item.done}
+              onChange={() =>
+                commit(items.map((it, i) => (i === index ? { ...it, done: !it.done } : it)))
+              }
+              aria-label={`Mark "${item.text}" ${item.done ? "not done" : "done"}`}
+              className="mt-2 h-3.5 w-3.5 shrink-0 accent-[var(--accent)]"
+            />
+            <input
+              defaultValue={item.text}
+              onBlur={(e) => updateText(index, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+                if (e.key === "Escape") {
+                  e.currentTarget.value = item.text;
+                  e.currentTarget.blur();
+                }
+              }}
+              maxLength={500}
+              aria-label={`${title} item`}
+              className={`${FIELD_CLASS} hover:bg-transparent ${item.done ? "text-[var(--muted)] line-through" : ""}`}
+            />
+            <button
+              type="button"
+              onClick={() => commit(items.filter((_, i) => i !== index))}
+              aria-label={`Remove "${item.text}"`}
+              className="mt-1 px-1 text-[var(--muted)] opacity-0 hover:text-red-500 focus:opacity-100 group-hover:opacity-100"
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            add();
+          }
+        }}
+        onBlur={add}
+        maxLength={500}
+        placeholder={addPlaceholder}
+        aria-label={addPlaceholder}
+        className={`${FIELD_CLASS} mt-1 placeholder:text-[var(--muted-light)]`}
+      />
+    </section>
+  );
+}
+
+function DependencyRow({
+  issue,
+  columns,
+  onRemove,
+}: {
+  issue: KanbanCard;
+  columns: KanbanColumn[];
+  onRemove?: () => void;
+}) {
+  const column = columns.find((col) => col.id === issue.column_id);
+  const color = column ? resolveColumnColor(column) : "#64748b";
+  return (
+    <li className="group flex items-center gap-2 rounded-md px-2 py-1 hover:bg-[var(--surface-hover)]">
+      <IssueTypeIcon type={issue.issue_type} />
+      <span
+        className={`font-mono text-xs font-medium text-[var(--muted)] ${issue.completed_at ? "line-through" : ""}`}
+      >
+        {issue.issue_key}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-sm text-[var(--foreground)]">{issue.title}</span>
+      {column && (
+        <span
+          className="shrink-0 rounded px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide"
+          style={tintedChipStyle(color)}
+        >
+          {column.name}
+        </span>
+      )}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove dependency ${issue.issue_key}`}
+          className="px-1 text-[var(--muted)] opacity-0 hover:text-red-500 focus:opacity-100 group-hover:opacity-100"
+        >
+          ×
+        </button>
+      )}
+    </li>
+  );
+}
+
+function DependenciesEditor({
+  card,
+  columns,
+  onChange,
+}: {
+  card: KanbanCard;
+  columns: KanbanColumn[];
+  onChange: (dependencies: string[]) => void;
+}) {
+  const allCards = columns.flatMap((col) => col.cards);
+  const byId = new Map(allCards.map((issue) => [issue.id, issue]));
+  // Ids of deleted issues can linger until the next board refetch, so skip unknown ones.
+  const blockedBy = card.dependencies.flatMap((id) => byId.get(id) ?? []);
+  const blocks = allCards.filter((issue) => issue.dependencies.includes(card.id));
+  const candidates = allCards.filter(
+    (issue) => issue.id !== card.id && !card.dependencies.includes(issue.id),
+  );
+  const openCount = blockedBy.filter((issue) => !issue.completed_at).length;
+
+  return (
+    <section>
+      <SectionHeading
+        title="Dependencies"
+        aside={
+          blockedBy.length > 0 && (
+            <span
+              className={`text-[11px] font-medium ${openCount ? "text-amber-600" : "text-emerald-600"}`}
+            >
+              {openCount ? `Blocked by ${openCount} open` : "All dependencies done"}
+            </span>
+          )
+        }
+      />
+      {blockedBy.length > 0 && (
+        <ul className="mt-2 space-y-0.5">
+          {blockedBy.map((issue) => (
+            <DependencyRow
+              key={issue.id}
+              issue={issue}
+              columns={columns}
+              onRemove={() => onChange(card.dependencies.filter((id) => id !== issue.id))}
+            />
+          ))}
+        </ul>
+      )}
+      <select
+        value=""
+        onChange={(e) => e.target.value && onChange([...card.dependencies, e.target.value])}
+        disabled={candidates.length === 0}
+        aria-label="Add dependency"
+        className={`${FIELD_CLASS} mt-1 text-[var(--muted)]`}
+      >
+        <option value="">
+          {candidates.length ? "Add an issue this depends on..." : "No other issues on this board"}
+        </option>
+        {candidates.map((issue) => (
+          <option key={issue.id} value={issue.id}>
+            {issue.issue_key} · {issue.title}
+          </option>
+        ))}
+      </select>
+      {blocks.length > 0 && (
+        <>
+          <p className="mt-3 px-2 text-xs font-medium text-[var(--muted)]">Blocks</p>
+          <ul className="mt-1 space-y-0.5">
+            {blocks.map((issue) => (
+              <DependencyRow key={issue.id} issue={issue} columns={columns} />
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -231,8 +609,6 @@ export function IssueDetail({
   onCommentCountChange,
 }: IssueDetailProps) {
   const [title, setTitle] = useState(card.title);
-  const [editingDescription, setEditingDescription] = useState(false);
-  const [description, setDescription] = useState(card.description);
   const [storyPoints, setStoryPoints] = useState(card.story_points?.toString() ?? "");
   const { data: projects = [] } = useProjects();
   const [error, setError] = useState<string | null>(null);
@@ -277,16 +653,6 @@ export function IssueDetail({
       return;
     }
     if (value !== card.story_points) void save({ story_points: value });
-  }
-
-  async function saveDescription() {
-    await save({ description: description.trim() });
-    setEditingDescription(false);
-  }
-
-  function cancelDescription() {
-    setDescription(card.description);
-    setEditingDescription(false);
   }
 
   const statusColor = column ? resolveColumnColor(column) : "#64748b";
@@ -374,63 +740,43 @@ export function IssueDetail({
               className="w-full resize-none rounded-md border border-transparent bg-transparent px-2 py-1 text-xl font-semibold leading-snug text-[var(--foreground)] outline-none [field-sizing:content] hover:bg-[var(--surface-hover)] focus:border-[var(--accent)] focus:bg-[var(--surface)]"
             />
 
-            <section>
-              <h3 className="text-sm font-semibold text-[var(--foreground)]">Description</h3>
-              {editingDescription ? (
-                <div className="mt-2 space-y-2">
-                  <MarkdownEditor
-                    autoFocus
-                    value={description}
-                    onChange={setDescription}
-                    onSubmit={() => void saveDescription()}
-                    onCancel={cancelDescription}
-                    placeholder="Add a description..."
-                    aria-label="Description"
-                    mentionCandidates={mentionCandidates}
-                    className="[&_.md-content]:min-h-[9rem]"
-                  />
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button onClick={saveDescription} className="px-3 py-1.5 text-xs">
-                      Save
-                    </Button>
-                    <Button variant="ghost" onClick={cancelDescription} className="px-3 py-1.5 text-xs">
-                      Cancel
-                    </Button>
-                    <MarkdownHint />
-                  </div>
-                </div>
-              ) : (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Edit description"
-                  onClick={(e) => {
-                    // Let links and checklist boxes in the rendered description work normally.
-                    if ((e.target as HTMLElement).closest("a, input, label")) return;
-                    setDescription(card.description);
-                    setEditingDescription(true);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.target === e.currentTarget) {
-                      e.preventDefault();
-                      setDescription(card.description);
-                      setEditingDescription(true);
-                    }
-                  }}
-                  className="mt-2 cursor-text rounded-md px-2 py-2 transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/30"
-                >
-                  {card.description ? (
-                    <MarkdownView
-                      value={card.description}
-                      onChange={(markdown) => void save({ description: markdown })}
-                      className="text-[var(--foreground)]"
-                    />
-                  ) : (
-                    <p className="text-sm text-[var(--muted-light)]">Add a description...</p>
-                  )}
-                </div>
-              )}
-            </section>
+            <ObjectiveField value={card.objective} onSave={(objective) => void save({ objective })} />
+
+            <MarkdownSection
+              title="Requirements"
+              value={card.requirements}
+              placeholder="Functional and technical expectations..."
+              mentionCandidates={mentionCandidates}
+              onSave={(requirements) => save({ requirements })}
+            />
+
+            <ChecklistEditor
+              title="Subtasks"
+              items={card.subtasks}
+              addPlaceholder="Add a subtask"
+              onChange={(subtasks) => void save({ subtasks })}
+            />
+
+            <ChecklistEditor
+              title="Acceptance criteria"
+              items={card.acceptance_criteria}
+              addPlaceholder="Add an acceptance criterion"
+              onChange={(acceptance_criteria) => void save({ acceptance_criteria })}
+            />
+
+            <DependenciesEditor
+              card={card}
+              columns={columns}
+              onChange={(dependencies) => void save({ dependencies })}
+            />
+
+            <MarkdownSection
+              title="Notes"
+              value={card.description}
+              placeholder="Add notes... (@ to mention)"
+              mentionCandidates={mentionCandidates}
+              onSave={(description) => save({ description })}
+            />
 
             <Comments
               cardId={card.id}

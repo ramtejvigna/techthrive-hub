@@ -99,6 +99,17 @@ class Card(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    # Ticket structure: the outcome, what's expected, how to get there and when it's done.
+    objective = models.TextField(blank=True)
+    requirements = models.TextField(blank=True)
+    subtasks = models.JSONField(default=list, blank=True)
+    acceptance_criteria = models.JSONField(default=list, blank=True)
+    dependencies = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        blank=True,
+        related_name="dependents",
+    )
     priority = models.CharField(
         max_length=10,
         choices=Priority.choices,

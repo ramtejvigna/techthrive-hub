@@ -381,6 +381,11 @@ export const api = {
         KanbanCard,
         | "issue_type"
         | "description"
+        | "objective"
+        | "requirements"
+        | "subtasks"
+        | "acceptance_criteria"
+        | "dependencies"
         | "priority"
         | "due_date"
         | "story_points"
@@ -402,6 +407,11 @@ export const api = {
         KanbanCard,
         | "title"
         | "description"
+        | "objective"
+        | "requirements"
+        | "subtasks"
+        | "acceptance_criteria"
+        | "dependencies"
         | "issue_type"
         | "priority"
         | "due_date"
