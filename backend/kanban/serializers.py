@@ -12,6 +12,30 @@ HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 BOARD_KEY_RE = re.compile(r"^[A-Z][A-Z0-9]{1,9}$")
 MAX_LABELS = 10
 MAX_LABEL_LENGTH = 30
+MAX_CHECKLIST_ITEMS = 50
+MAX_CHECKLIST_ITEM_LENGTH = 500
+MAX_DEPENDENCIES = 20
+
+
+def validate_checklist(items, name):
+    """Normalise a checklist to [{"text": str, "done": bool}], dropping blank items."""
+    if not isinstance(items, list):
+        raise serializers.ValidationError(f"{name} must be a list.")
+    cleaned = []
+    for item in items:
+        if not isinstance(item, dict) or not isinstance(item.get("text"), str):
+            raise serializers.ValidationError(f"Each {name.lower()} item needs a text value.")
+        text = item["text"].strip()
+        if not text:
+            continue
+        if len(text) > MAX_CHECKLIST_ITEM_LENGTH:
+            raise serializers.ValidationError(
+                f"{name} items can be at most {MAX_CHECKLIST_ITEM_LENGTH} characters."
+            )
+        cleaned.append({"text": text, "done": bool(item.get("done", False))})
+    if len(cleaned) > MAX_CHECKLIST_ITEMS:
+        raise serializers.ValidationError(f"{name} can have at most {MAX_CHECKLIST_ITEMS} items.")
+    return cleaned
 
 
 class CardCommentSerializer(serializers.ModelSerializer):
@@ -41,6 +65,11 @@ class CardSerializer(serializers.ModelSerializer):
             "issue_type",
             "title",
             "description",
+            "objective",
+            "requirements",
+            "subtasks",
+            "acceptance_criteria",
+            "dependencies",
             "priority",
             "due_date",
             "story_points",
@@ -107,6 +136,38 @@ class CardSerializer(serializers.ModelSerializer):
         if len(cleaned) > MAX_LABELS:
             raise serializers.ValidationError(f"An issue can have at most {MAX_LABELS} labels.")
         return cleaned
+
+    def validate_subtasks(self, subtasks):
+        return validate_checklist(subtasks, "Subtasks")
+
+    def validate_acceptance_criteria(self, criteria):
+        return validate_checklist(criteria, "Acceptance criteria")
+
+    def validate_dependencies(self, dependencies):
+        if len(dependencies) > MAX_DEPENDENCIES:
+            raise serializers.ValidationError(
+                f"An issue can depend on at most {MAX_DEPENDENCIES} issues."
+            )
+        board = self.instance.column.board if self.instance else self.context.get("board")
+        if board is None or any(dep.column.board_id != board.id for dep in dependencies):
+            raise serializers.ValidationError("Dependencies must be issues on the same board.")
+        if self.instance is None:
+            return dependencies
+        if any(dep.pk == self.instance.pk for dep in dependencies):
+            raise serializers.ValidationError("An issue can't depend on itself.")
+        # Reject cycles: none of the new dependencies may (transitively) depend on this issue.
+        through = Card.dependencies.through
+        seen = set()
+        frontier = {dep.pk for dep in dependencies}
+        while frontier:
+            if self.instance.pk in frontier:
+                raise serializers.ValidationError("That would create a circular dependency.")
+            seen |= frontier
+            frontier = set(
+                through.objects.filter(from_card_id__in=frontier)
+                .values_list("to_card_id", flat=True)
+            ) - seen
+        return dependencies
 
     def validate_project(self, project):
         if project is None:

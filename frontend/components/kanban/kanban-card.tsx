@@ -34,6 +34,8 @@ function CardBody({
 }) {
   const dueLabel = isCompletedColumn ? null : formatDueLabel(card.due_date);
   const overdue = dueLabel?.includes("Past Due") ?? false;
+  const subtasksTotal = card.subtasks.length;
+  const subtasksDone = card.subtasks.filter((item) => item.done).length;
   const hasChips =
     card.labels.length > 0 || Boolean(card.project_name) || Boolean(card.milestone_id) || Boolean(dueLabel);
 
@@ -93,6 +95,21 @@ function CardBody({
           {card.issue_key}
         </span>
         <div className="ml-auto flex items-center gap-1.5">
+          {subtasksTotal > 0 && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 font-mono text-[11px]",
+                subtasksDone === subtasksTotal ? "text-emerald-600" : "text-[var(--muted)]",
+              )}
+              title={`${subtasksDone} of ${subtasksTotal} subtasks done`}
+            >
+              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+                <rect x="2" y="2" width="12" height="12" rx="3" />
+                <path d="m5 8.2 2 2 4-4.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {subtasksDone}/{subtasksTotal}
+            </span>
+          )}
           {card.comment_count > 0 && (
             <span
               className="inline-flex items-center gap-0.5 text-[11px] text-[var(--muted)]"
