@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "kanban",
     "dashboard",
     "docs",
+    "canvases",
     "notifications",
 ]
 

@@ -18,7 +18,7 @@ export default function WorkspaceLayout({
       {/* Fixed chrome lives outside the canvas so it never takes part in its flex layout. */}
       <QuickRail />
       {/* The rail (with its theme toggle) is desktop-only. */}
-      <div className="fixed bottom-4 left-4 z-30 xl:hidden">
+      <div className="workspace-theme-toggle fixed bottom-4 left-4 z-30 xl:hidden">
         <ThemeToggleCompact />
       </div>
     </>

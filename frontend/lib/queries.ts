@@ -38,6 +38,13 @@ export const queryKeys = {
     list: (query: string) => [...queryKeys.docs.lists(), query] as const,
     detail: (id: string) => [...queryKeys.docs.all, "detail", id] as const,
   },
+  canvases: {
+    all: ["canvases"] as const,
+    lists: () => [...queryKeys.canvases.all, "list"] as const,
+    list: (query: string, project: string) =>
+      [...queryKeys.canvases.lists(), query, project] as const,
+    detail: (id: string) => [...queryKeys.canvases.all, "detail", id] as const,
+  },
 };
 
 export function createQueryClient(): QueryClient {
@@ -141,6 +148,26 @@ export function useDocs(query: string) {
     queryFn: () => api.getDocs(query),
     // Keep showing the previous results while a new search loads.
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useCanvases(query = "", project = "") {
+  return useQuery({
+    queryKey: queryKeys.canvases.list(query, project),
+    queryFn: () => api.getCanvases(query, project),
+    // Keep showing the previous results while a new search loads.
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useCanvas(id: string) {
+  return useQuery({
+    queryKey: queryKeys.canvases.detail(id),
+    queryFn: () => api.getCanvas(id),
+    // The editor only reads the canvas once, as its initial scene, so it must
+    // never start from a cached copy that predates the last autosave.
+    staleTime: 0,
+    gcTime: 0,
   });
 }
 

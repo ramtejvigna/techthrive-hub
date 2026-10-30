@@ -1,6 +1,6 @@
 "use client";
 
-import { DocsIcon, KanbanIcon, PlansIcon } from "@/components/icons/nav-icons";
+import { CanvasIcon, DocsIcon, KanbanIcon, PlansIcon } from "@/components/icons/nav-icons";
 import { api } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import { queryKeys } from "@/lib/queries";
@@ -86,6 +86,9 @@ export function QuickRail() {
       </RailLink>
       <RailLink href="/docs" label="Docs">
         <DocsIcon className="h-4 w-4" />
+      </RailLink>
+      <RailLink href="/canvas" label="Canvas">
+        <CanvasIcon className="h-4 w-4" />
       </RailLink>
       <RailLink href="/plans" label="Plans">
         <PlansIcon className="h-4 w-4" />

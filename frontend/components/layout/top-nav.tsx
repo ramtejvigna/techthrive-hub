@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CanvasIcon,
   DocsIcon,
   HomeIcon,
   KanbanIcon,
@@ -53,6 +54,12 @@ const navItems: NavItem[] = [
     label: "Docs",
     icon: DocsIcon,
     match: (pathname) => pathname.startsWith("/docs"),
+  },
+  {
+    href: "/canvas",
+    label: "Canvas",
+    icon: CanvasIcon,
+    match: (pathname) => pathname.startsWith("/canvas"),
   },
   {
     href: "/plans",

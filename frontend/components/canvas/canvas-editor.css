@@ -1,0 +1,69 @@
+/* Excalidraw reads its look from CSS variables; map them onto the app's tokens.
+   Its dialogs render on document.body, so they need the same mapping. */
+.canvas-stage .excalidraw,
+.canvas-stage .excalidraw.theme--dark,
+body:has(.canvas-stage) .excalidraw-modal-container.excalidraw {
+  --color-primary: var(--accent);
+  --color-primary-darker: var(--accent-hover);
+  --color-primary-darkest: var(--accent-hover);
+  --color-primary-hover: var(--accent-hover);
+  --color-primary-light: var(--accent-light);
+  --color-primary-light-darker: var(--accent-light);
+
+  --island-bg-color: var(--surface);
+  --popup-bg-color: var(--surface);
+  --sidebar-bg-color: var(--surface);
+  --default-bg-color: var(--surface);
+  --sidebar-border-color: var(--border);
+  --default-border-color: var(--border);
+  --dialog-border-color: var(--border);
+  --color-border-outline-variant: var(--border);
+  --color-surface-low: var(--surface-muted);
+  --color-surface-mid: var(--surface-hover);
+  --color-surface-high: var(--surface-subtle);
+  --button-hover-bg: var(--surface-hover);
+  --button-gray-1: var(--surface-hover);
+  --button-gray-2: var(--surface-subtle);
+  --text-primary-color: var(--foreground);
+  --color-on-surface: var(--foreground);
+  --icon-fill-color: var(--foreground);
+
+  /* The active tool reads like the active pill in the top nav. */
+  --color-surface-primary-container: var(--ink);
+  --color-on-primary-container: var(--ink-fg);
+
+  --border-radius-md: 0.625rem;
+  --border-radius-lg: 0.875rem;
+  --shadow-island: var(--panel-shadow);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Hairline around floating panels, as on the app's own cards. */
+.canvas-stage .excalidraw .Island {
+  border: 1px solid var(--border);
+}
+
+/* Ink has no contrast on the dark theme's surfaces. */
+.dark .canvas-stage .excalidraw.theme--dark,
+.dark body:has(.canvas-stage) .excalidraw-modal-container.excalidraw {
+  --color-surface-primary-container: var(--accent-light);
+  --color-on-primary-container: var(--accent-hover);
+}
+
+/* Tips sit over the drawing; the help dialog has them all. */
+.canvas-stage .excalidraw .HintViewer {
+  display: none;
+}
+
+.canvas-stage .excalidraw .welcome-screen-center__heading,
+.canvas-stage .excalidraw .welcome-screen-menu-item__text,
+.canvas-stage .excalidraw .welcome-screen-menu-item__icon,
+.canvas-stage .excalidraw .welcome-screen-decor {
+  color: var(--muted);
+}
+
+/* The floating toggle would cover the canvas's corner controls; the canvas menu
+   offers the theme instead. */
+body:has(.canvas-stage) .workspace-theme-toggle {
+  display: none;
+}

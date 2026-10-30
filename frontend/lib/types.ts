@@ -243,6 +243,31 @@ export interface Doc {
   updated_at: string;
 }
 
+/** Excalidraw elements plus the app state worth keeping; `{}` for a new canvas. */
+export interface CanvasScene {
+  elements?: readonly unknown[];
+  appState?: { viewBackgroundColor?: string };
+}
+
+export interface CanvasListItem {
+  id: string;
+  title: string;
+  project: string | null;
+  project_name: string | null;
+  owner: User;
+  is_owner: boolean;
+  /** PNG data URL; empty until the canvas has something on it. */
+  thumbnail: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Canvas extends CanvasListItem {
+  scene: CanvasScene;
+  scene_text: string;
+  version: number;
+}
+
 export interface AuthTokens {
   access: string;
   refresh: string;
