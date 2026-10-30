@@ -52,6 +52,17 @@ export function BlogIcon(props: IconProps) {
   );
 }
 
+export function CanvasIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
+      <rect x="3" y="4" width="7" height="5" rx="1" />
+      <rect x="14" y="15" width="7" height="5" rx="1" />
+      <circle cx="17.5" cy="6.5" r="2.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 9v5a3 3 0 0 0 3 3H14" />
+    </svg>
+  );
+}
+
 export function DocsIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>

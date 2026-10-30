@@ -20,6 +20,7 @@ import type {
   IssueType,
   KanbanCard,
   KanbanColumn,
+  LinkedProject,
   User,
 } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
@@ -36,6 +37,8 @@ interface IssueDetailProps {
   columns: KanbanColumn[];
   /** People the issue can be assigned to. */
   members: User[];
+  /** Projects linked to this board; its tickets are their milestones. */
+  linkedProjects: LinkedProject[];
   currentUser: User | null;
   onClose: () => void;
   onUpdate: (patch: CardPatch) => Promise<void>;
@@ -602,6 +605,7 @@ export function IssueDetail({
   boardKey,
   columns,
   members,
+  linkedProjects,
   currentUser,
   onClose,
   onUpdate,
@@ -616,6 +620,7 @@ export function IssueDetail({
   const column = columns.find((col) => col.id === card.column_id);
   const mentionCandidates = members.filter((member) => member.id !== currentUser?.id);
   const isMilestone = Boolean(card.milestone_id);
+  const projectOptions = isMilestone ? linkedProjects : projects;
 
   useEffect(() => {
     function handleKeyDown(event: globalThis.KeyboardEvent) {
@@ -897,16 +902,16 @@ export function IssueDetail({
                   <select
                     value={card.project_id ?? ""}
                     onChange={(e) => void save({ project: e.target.value || null })}
-                    disabled={isMilestone}
+                    disabled={isMilestone && linkedProjects.length < 2}
                     aria-label="Project"
-                    title={isMilestone ? "Milestone ticket belong to their project" : undefined}
+                    title={isMilestone ? "Tickets on a linked board are milestones of its project" : undefined}
                     className={FIELD_CLASS}
                   >
-                    <option value="">None</option>
-                    {card.project_id && !projects.some((project) => project.id === card.project_id) && (
+                    {!isMilestone && <option value="">None</option>}
+                    {card.project_id && !projectOptions.some((project) => project.id === card.project_id) && (
                       <option value={card.project_id}>{card.project_name}</option>
                     )}
-                    {projects.map((project) => (
+                    {projectOptions.map((project) => (
                       <option key={project.id} value={project.id}>
                         {project.name}
                       </option>

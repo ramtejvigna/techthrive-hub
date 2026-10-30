@@ -4,6 +4,8 @@ import type {
   Board,
   CardComment,
   DashboardSummary,
+  Canvas,
+  CanvasListItem,
   Doc,
   DocListItem,
   NotificationList,
@@ -21,6 +23,10 @@ import type {
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+type CanvasPayload = Partial<
+  Pick<Canvas, "title" | "project" | "scene" | "scene_text" | "thumbnail">
+>;
 
 export class ApiError extends Error {
   status: number;
@@ -317,6 +323,34 @@ export const api = {
     }),
 
   deleteDoc: (id: string) => apiFetch<void>(`/api/docs/${id}/`, { method: "DELETE" }),
+
+  getCanvases: async (query = "", project = "") => {
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("q", query.trim());
+    if (project) params.set("project", project);
+    const search = params.size ? `?${params}` : "";
+    const data = await apiFetch<PaginatedResponse<CanvasListItem> | CanvasListItem[]>(
+      `/api/canvases/${search}`,
+    );
+    return unwrapList(data);
+  },
+
+  getCanvas: (id: string) => apiFetch<Canvas>(`/api/canvases/${id}/`),
+
+  createCanvas: (payload: CanvasPayload = {}) =>
+    apiFetch<Canvas>("/api/canvases/", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  /** Scene saves need `base_version`; a stale one is rejected with a 409. */
+  updateCanvas: (id: string, payload: CanvasPayload & { base_version?: number }) =>
+    apiFetch<Canvas>(`/api/canvases/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+
+  deleteCanvas: (id: string) => apiFetch<void>(`/api/canvases/${id}/`, { method: "DELETE" }),
 
   getBoards: async () => {
     const data = await apiFetch<PaginatedResponse<Board> | Board[]>(

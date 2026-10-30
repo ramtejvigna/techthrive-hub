@@ -2,7 +2,8 @@
 
 A project is visible to its owner and its members. A board is visible to its
 owner and to members of any project linked to it, so adding someone to a
-project also shares that project's board.
+project also shares that project's board. A canvas is visible to its owner and
+to anyone who can see its project.
 
 Membership checks use subqueries rather than joins so they never duplicate
 rows, which would inflate the Count() annotations the list views use.
@@ -28,6 +29,14 @@ def accessible_boards(user):
         pk__in=member_project_ids(user), board__isnull=False
     ).values("board_id")
     return Board.objects.filter(Q(user=user) | Q(pk__in=shared_board_ids))
+
+
+def accessible_canvases(user):
+    from canvases.models import Canvas
+
+    return Canvas.objects.filter(
+        Q(user=user) | Q(project__in=accessible_projects(user).values("pk"))
+    )
 
 
 def project_users(project):

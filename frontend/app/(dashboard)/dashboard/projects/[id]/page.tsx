@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectCanvases } from "@/components/canvas/project-canvases";
 import { PageHeader } from "@/components/layout/page-header";
 import { MilestoneList } from "@/components/projects/milestone-list";
 import { PhasePanel } from "@/components/projects/phase-panel";
@@ -309,6 +310,8 @@ export default function ProjectDetailPage() {
           </AnimatePresence>
         </div>
       </LayoutGroup>
+
+      <ProjectCanvases projectId={params.id} />
 
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit project">
         <ProjectForm

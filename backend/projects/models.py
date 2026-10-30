@@ -199,6 +199,9 @@ class Milestone(models.Model):
         default=BucketStatus.TODO,
     )
     completed = models.BooleanField(default=False)
+    # Born from a ticket on the linked board, rather than added on the project.
+    # Such a ticket outlives its milestone when the board is unlinked.
+    from_ticket = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
