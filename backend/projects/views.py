@@ -70,6 +70,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         if instance.user_id != self.request.user.id:
             raise PermissionDenied("Only the project owner can delete it.")
+        from kanban.sync import release_ticket_milestones
+
+        # Cards cascade from their milestone; tickets should outlive the project.
+        release_ticket_milestones(instance)
         instance.delete()
 
     @action(detail=True, methods=["post"], url_path="members")

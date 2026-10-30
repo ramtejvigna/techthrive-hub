@@ -50,7 +50,7 @@ Update `backend/.env` with `DATABASE_URL=postgres://techthrive:devpassword@local
 - Dashboard home with summary widgets
 - Project management with milestones
 - Kanban boards with drag-and-drop
-- Optional project ↔ board linking
+- Optional project ↔ board linking: every ticket on a linked board is a milestone of its project
 
 ## Coming soon
 

@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 
 from notifications import services as notifications
 from projects.access import accessible_boards, accessible_projects
+from projects.models import Milestone
 
 from .models import Board, Card, CardComment, Column
 from .serializers import (
@@ -63,6 +64,7 @@ class BoardViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         if instance.user_id != self.request.user.id:
             raise PermissionDenied("Only the board owner can delete it.")
+        Milestone.objects.filter(card__column__board=instance, from_ticket=True).delete()
         instance.delete()
 
     def retrieve(self, request, *args, **kwargs):
@@ -177,6 +179,10 @@ class ColumnDetailView(generics.RetrieveUpdateDestroyAPIView):
             board__in=accessible_boards(self.request.user),
         ).prefetch_related("cards")
 
+    def perform_destroy(self, instance):
+        Milestone.objects.filter(card__column=instance, from_ticket=True).delete()
+        instance.delete()
+
 
 class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CardSerializer
@@ -218,7 +224,12 @@ class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
             milestone = card.milestone
             milestone.title = card.title
             milestone.target_date = card.due_date
-            milestone.save(update_fields=["title", "target_date", "updated_at"])
+            if milestone.project_id != card.project_id:
+                milestone.project_id = card.project_id
+                milestone.phase = None  # phases belong to the previous project
+            milestone.save(
+                update_fields=["title", "target_date", "project", "phase", "updated_at"]
+            )
 
         actor = self.request.user
         if card.assignee_id and card.assignee_id != previous_assignee_id:
@@ -228,6 +239,14 @@ class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
             notifications.notify_card_moved(card, actor, previous_column, card.column)
         if card.description != previous_description:
             notifications.notify_card_description_mentions(card, actor, previous_description)
+
+    def perform_destroy(self, instance):
+        # The card cascades from its milestone; leaving the milestone behind
+        # would bring the ticket back on the next board sync.
+        if instance.milestone_id:
+            instance.milestone.delete()
+        else:
+            instance.delete()
 
 
 class CardCreateView(generics.CreateAPIView):
@@ -249,6 +268,7 @@ class CardCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         from .column_moves import apply_card_to_column
+        from .sync import create_milestone_for_card
 
         column = self.get_column()
         max_pos = column.cards.order_by("-position").values_list("position", flat=True).first()
@@ -263,6 +283,7 @@ class CardCreateView(generics.CreateAPIView):
             column,
             columns=list(column.board.columns.all()),
         )
+        create_milestone_for_card(card)
         notifications.notify_card_assigned(card, self.request.user)
         notifications.notify_card_description_mentions(card, self.request.user)
 

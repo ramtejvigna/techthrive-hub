@@ -170,6 +170,12 @@ class CardSerializer(serializers.ModelSerializer):
         return dependencies
 
     def validate_project(self, project):
+        if self.instance is not None:
+            linked = Project.objects.filter(board_id=self.instance.column.board_id)
+            if linked.exists() and (project is None or not linked.filter(pk=project.pk).exists()):
+                raise serializers.ValidationError(
+                    "Tickets on a linked board must belong to one of its projects."
+                )
         if project is None:
             return project
         user = self.context["request"].user

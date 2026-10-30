@@ -304,7 +304,13 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
   }
 
   async function handleDeleteCard(cardId: string) {
-    if (!confirm("Delete this issue? This can't be undone.")) return;
+    const isMilestone = columns.some((column) =>
+      column.cards.some((card) => card.id === cardId && card.milestone_id),
+    );
+    const prompt = isMilestone
+      ? "Delete this issue and its project milestone? This can't be undone."
+      : "Delete this issue? This can't be undone.";
+    if (!confirm(prompt)) return;
     await api.deleteCard(cardId);
     setOpenCardId(null);
     setColumns((prev) =>
@@ -549,10 +555,11 @@ export function KanbanBoard({ boardId, onDeleteBoard }: KanbanBoardProps) {
             boardKey={board.key}
             columns={columns}
             members={board.members ?? []}
+            linkedProjects={board.linked_projects ?? []}
             currentUser={currentUser}
             onClose={closeIssue}
             onUpdate={(patch) => handleUpdateCard(openCard.id, patch)}
-            onDelete={openCard.milestone_id ? undefined : () => handleDeleteCard(openCard.id)}
+            onDelete={() => handleDeleteCard(openCard.id)}
             onCommentCountChange={(count) => handleCommentCountChange(openCard.id, count)}
           />
         )}

@@ -79,6 +79,43 @@ def create_card_for_milestone(milestone: Milestone) -> Card | None:
     return card
 
 
+def linked_project_for_card(card: Card) -> Project | None:
+    """The card's own project if linked to its board, else the oldest linked one."""
+    projects = list(Project.objects.filter(board_id=card.column.board_id).order_by("created_at"))
+    fallback = projects[0] if projects else None
+    return next((project for project in projects if project.id == card.project_id), fallback)
+
+
+@transaction.atomic
+def create_milestone_for_card(card: Card) -> Milestone | None:
+    """Tickets on a project-linked board are that project's milestones."""
+    if card.milestone_id:
+        return card.milestone
+
+    project = linked_project_for_card(card)
+    if not project:
+        return None
+
+    milestone = Milestone.objects.create(
+        project=project,
+        title=card.title,
+        target_date=card.due_date,
+        from_ticket=True,
+    )
+    card.project = project
+    card.milestone = milestone
+    card.save(update_fields=["project", "milestone", "updated_at"])
+    apply_bucket_status_to_milestone(milestone, card.column)
+    return milestone
+
+
+@transaction.atomic
+def sync_board_tickets_to_milestones(board: Board) -> None:
+    cards = Card.objects.filter(column__board=board, milestone__isnull=True)
+    for card in cards.select_related("column"):
+        create_milestone_for_card(card)
+
+
 @transaction.atomic
 def sync_project_milestones_to_board(project: Project) -> None:
     if not project.board_id:
@@ -86,6 +123,7 @@ def sync_project_milestones_to_board(project: Project) -> None:
 
     for milestone in project.milestones.all():
         create_card_for_milestone(milestone)
+    sync_board_tickets_to_milestones(project.board)
 
 
 @transaction.atomic
@@ -96,7 +134,16 @@ def sync_board_linked_projects(board: Board) -> None:
 
 
 @transaction.atomic
+def release_ticket_milestones(project: Project) -> None:
+    """Turn milestones born from tickets back into plain tickets, keeping the tickets."""
+    milestones = project.milestones.filter(from_ticket=True)
+    Card.objects.filter(milestone__in=milestones).update(project=None, milestone=None)
+    milestones.delete()
+
+
+@transaction.atomic
 def delete_milestone_cards_for_project(project: Project) -> None:
+    release_ticket_milestones(project)
     Card.objects.filter(project=project, milestone__isnull=False).delete()
 
 
