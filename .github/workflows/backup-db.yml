@@ -29,8 +29,8 @@ jobs:
         run: |
           set -euo pipefail
           FILE="techthrive-$(date -u +%Y-%m-%dT%H%MZ).dump"
-          # pg_dump must be at least the server's major version; 17 covers Neon's current versions.
-          docker run --rm -e DATABASE_URL postgres:17 \
+          # pg_dump must be at least the server's major version; Neon is on 18.
+          docker run --rm -e DATABASE_URL postgres:18 \
             sh -c 'pg_dump "$DATABASE_URL" --format=custom --no-owner --no-privileges' > "$FILE"
           test -s "$FILE"
           aws s3 cp "$FILE" "s3://$BUCKET/db/$FILE"

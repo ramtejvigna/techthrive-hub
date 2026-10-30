@@ -106,7 +106,7 @@ Frontend deploys stay with Vercel's Git integration.
 
   ```bash
   aws s3 cp s3://BACKUP_BUCKET/db/FILE.dump . --profile techthrive
-  docker run --rm -i -e DATABASE_URL postgres:17 \
+  docker run --rm -i -e DATABASE_URL postgres:18 \
     sh -c 'pg_restore --clean --if-exists --no-owner -d "$DATABASE_URL"' < FILE.dump
   ```
 
