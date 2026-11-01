@@ -105,6 +105,7 @@ The Analytics page reads each website's stats from Google Analytics through the 
    ```bash
    export GA_PROPERTIES='Main site=123456789,Blog=987654321'
    export GA_KEY_FILE=/path/to/service-account-key.json
+   export AWS_REGION=eu-west-2 # Where the function lives; overrides the profile's default region.
    aws lambda update-function-configuration --profile techthrive --function-name techthrive-backend \
      --environment "$(aws lambda get-function-configuration --profile techthrive --function-name techthrive-backend \
        --query Environment --output json | python -c '
