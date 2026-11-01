@@ -1,5 +1,5 @@
 import { ApiError, api } from "./api";
-import type { SdlcPhaseKey } from "./types";
+import type { AnalyticsRange, SdlcPhaseKey } from "./types";
 import {
   QueryClient,
   keepPreviousData,
@@ -44,6 +44,14 @@ export const queryKeys = {
     list: (query: string, project: string) =>
       [...queryKeys.canvases.lists(), query, project] as const,
     detail: (id: string) => [...queryKeys.canvases.all, "detail", id] as const,
+  },
+  analytics: {
+    all: ["analytics"] as const,
+    sites: () => [...queryKeys.analytics.all, "sites"] as const,
+    overview: (range: AnalyticsRange) => [...queryKeys.analytics.all, "overview", range] as const,
+    report: (siteId: string, range: AnalyticsRange) =>
+      [...queryKeys.analytics.all, "report", siteId, range] as const,
+    realtime: (siteId: string) => [...queryKeys.analytics.all, "realtime", siteId] as const,
   },
 };
 
@@ -157,6 +165,42 @@ export function useCanvases(query = "", project = "") {
     queryFn: () => api.getCanvases(query, project),
     // Keep showing the previous results while a new search loads.
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Matches the backend's report cache; refetching sooner would return the same numbers. */
+const ANALYTICS_STALE_MS = 10 * 60_000;
+/** Matches the backend's realtime cache. */
+const ANALYTICS_LIVE_MS = 60_000;
+
+export function useAnalyticsSites() {
+  return useQuery({ queryKey: queryKeys.analytics.sites(), queryFn: api.getAnalyticsSites });
+}
+
+export function useAnalyticsOverview(range: AnalyticsRange, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.analytics.overview(range),
+    queryFn: () => api.getAnalyticsOverview(range),
+    staleTime: ANALYTICS_STALE_MS,
+    enabled,
+  });
+}
+
+export function useAnalyticsReport(siteId: string, range: AnalyticsRange, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.analytics.report(siteId, range),
+    queryFn: () => api.getAnalyticsReport(siteId, range),
+    staleTime: ANALYTICS_STALE_MS,
+    enabled,
+  });
+}
+
+export function useAnalyticsRealtime(siteId: string) {
+  return useQuery({
+    queryKey: queryKeys.analytics.realtime(siteId),
+    queryFn: () => api.getAnalyticsRealtime(siteId),
+    staleTime: ANALYTICS_LIVE_MS,
+    refetchInterval: ANALYTICS_LIVE_MS,
   });
 }
 

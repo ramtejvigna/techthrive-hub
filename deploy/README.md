@@ -90,6 +90,49 @@ It creates the `techthrive-backend-ws` WebSocket API, lets the Lambda role push 
 
 **Turn it off:** remove the three `WEBSOCKET_*` variables from the Lambda environment. Delete the API with `aws apigatewayv2 delete-api --api-id ID`.
 
+## Website analytics
+
+The Analytics page reads each website's stats from Google Analytics through the free GA4 Data API. A Google service account (a bot login with read-only access) does the reading, so it needs setting up once. No billing account is needed.
+
+**Setup:**
+
+1. **Google Cloud**: in the [console](https://console.cloud.google.com), create a project and enable the **Google Analytics Data API** (APIs & Services → Library). Skip any free-trial prompt.
+2. **Service account**: under IAM & Admin → Service Accounts, create one with no roles. Then open it, go to Keys → Add key → Create new key → JSON, and save the file outside the repo.
+3. **Google Analytics**: for each website's property, go to Admin → Property access management → Add users. Paste the service account's email, choose the **Viewer** role, and turn off the email notification.
+4. **Property IDs**: copy the numeric ID from Admin → Property details. It isn't the `G-XXXX` tag ID.
+5. **AWS**: from the repo root, with your own site names and IDs:
+
+   ```bash
+   export GA_PROPERTIES='Main site=123456789,Blog=987654321'
+   export GA_KEY_FILE=/path/to/service-account-key.json
+   export AWS_REGION=eu-west-2 # Where the function lives; overrides the profile's default region.
+   aws lambda update-function-configuration --profile techthrive --function-name techthrive-backend \
+     --environment "$(aws lambda get-function-configuration --profile techthrive --function-name techthrive-backend \
+       --query Environment --output json | python -c '
+   import json, os, sys
+   env = json.load(sys.stdin)
+   key = json.load(open(os.environ["GA_KEY_FILE"]))
+   env["Variables"].update(
+       GA_SERVICE_ACCOUNT_EMAIL=key["client_email"],
+       GA_PRIVATE_KEY=key["private_key"],
+       GA_PROPERTIES=os.environ["GA_PROPERTIES"],
+   )
+   print(json.dumps(env))')"
+   ```
+
+   Then delete the key file. To add a website later, repeat steps 3 and 4 and update `GA_PROPERTIES` in the Lambda console.
+
+Only those two fields of the key are stored because Lambda allows 4 KB of environment variables in total, and the whole JSON file takes over half of that.
+
+**Behaviour to know:**
+- **Who can see it.** Everyone who can log in sees every configured website.
+- **Freshness.** Reports cover full days up to yesterday and are cached for 10 minutes. Google can take 24–48 hours to settle a day's numbers. *Live now* refreshes every minute.
+- **Neon.** Reports come from Google when someone opens the page, and nothing runs on a schedule, so this doesn't keep Neon awake.
+
+**Common problems:** "Google Analytics refused access" means the service account isn't a Viewer on that property, or the Data API isn't enabled. "Couldn't reach Google Analytics" usually means the key is wrong; the details are in CloudWatch.
+
+**Turn it off:** remove the three `GA_*` variables from the Lambda environment, and delete the key in Google Cloud.
+
 ## Everyday deploys
 
 Merging to `main` with changes under `backend/` runs **Deploy backend**. It builds the image, runs migrations, updates the Lambda and checks `/api/health/`. You can also run it by hand from the Actions tab. Migrations run *before* the code switch, so keep them backward compatible with the version that's live.
