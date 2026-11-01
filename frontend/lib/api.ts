@@ -1,5 +1,10 @@
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth";
 import type {
+  AnalyticsOverviewSite,
+  AnalyticsRange,
+  AnalyticsRealtime,
+  AnalyticsReport,
+  AnalyticsSite,
   AuthTokens,
   Board,
   CardComment,
@@ -351,6 +356,25 @@ export const api = {
     }),
 
   deleteCanvas: (id: string) => apiFetch<void>(`/api/canvases/${id}/`, { method: "DELETE" }),
+
+  /** The configured sites; empty until the backend is connected to Google. */
+  getAnalyticsSites: async () => {
+    const data = await apiFetch<{ sites: AnalyticsSite[] }>("/api/analytics/sites/");
+    return data.sites;
+  },
+
+  getAnalyticsOverview: async (range: AnalyticsRange) => {
+    const data = await apiFetch<{ sites: AnalyticsOverviewSite[] }>(
+      `/api/analytics/overview/?range=${range}`,
+    );
+    return data.sites;
+  },
+
+  getAnalyticsReport: (siteId: string, range: AnalyticsRange) =>
+    apiFetch<AnalyticsReport>(`/api/analytics/sites/${siteId}/report/?range=${range}`),
+
+  getAnalyticsRealtime: (siteId: string) =>
+    apiFetch<AnalyticsRealtime>(`/api/analytics/sites/${siteId}/realtime/`),
 
   getBoards: async () => {
     const data = await apiFetch<PaginatedResponse<Board> | Board[]>(

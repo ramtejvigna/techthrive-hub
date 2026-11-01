@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AnalyticsIcon,
   CanvasIcon,
   DocsIcon,
   HomeIcon,
@@ -48,6 +49,12 @@ const navItems: NavItem[] = [
     icon: KanbanIcon,
     match: (pathname) => pathname.startsWith("/dashboard/kanban"),
     count: (summary) => summary.total_boards,
+  },
+  {
+    href: "/dashboard/analytics",
+    label: "Analytics",
+    icon: AnalyticsIcon,
+    match: (pathname) => pathname.startsWith("/dashboard/analytics"),
   },
   {
     href: "/docs",

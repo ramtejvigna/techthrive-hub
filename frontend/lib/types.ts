@@ -208,6 +208,61 @@ export interface NotificationSocketMessage {
   notification: AppNotification;
 }
 
+export type AnalyticsRange = "7d" | "28d" | "90d";
+
+export interface AnalyticsSite {
+  id: string;
+  name: string;
+}
+
+export interface AnalyticsTotals {
+  users: number;
+  sessions: number;
+  views: number;
+  engagement_rate: number;
+  avg_session_seconds: number;
+  key_events: number;
+}
+
+export interface AnalyticsOverviewSite extends AnalyticsSite {
+  totals: AnalyticsTotals | null;
+  previous: AnalyticsTotals | null;
+  error: string | null;
+}
+
+export interface AnalyticsDay {
+  date: string;
+  users: number;
+  sessions: number;
+  views: number;
+}
+
+export interface AnalyticsRow {
+  label: string;
+  value: number;
+}
+
+export interface AnalyticsReport {
+  days: number;
+  generated_at: string;
+  /** Google hid or estimated some of the numbers. */
+  partial_data: boolean;
+  totals: AnalyticsTotals;
+  previous: AnalyticsTotals;
+  daily: AnalyticsDay[];
+  pages: AnalyticsRow[];
+  landing_pages: AnalyticsRow[];
+  channels: AnalyticsRow[];
+  countries: AnalyticsRow[];
+  devices: AnalyticsRow[];
+  events: AnalyticsRow[];
+}
+
+export interface AnalyticsRealtime {
+  active_users: number;
+  pages: AnalyticsRow[];
+}
+
 export interface DashboardSummary {
   active_projects: number;
   overdue_milestones: number;

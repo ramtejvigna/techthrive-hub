@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "docs",
     "canvases",
     "notifications",
+    "analytics",
 ]
 
 MIDDLEWARE = [
@@ -138,6 +139,14 @@ WEBSOCKET_MANAGEMENT_URL = env("WEBSOCKET_MANAGEMENT_URL", default="")
 WEBSOCKET_SHARED_SECRET = env("WEBSOCKET_SHARED_SECRET", default="")
 if WEBSOCKET_PUBLIC_URL and not WEBSOCKET_SHARED_SECRET:
     raise ImproperlyConfigured("WEBSOCKET_SHARED_SECRET must be set when WEBSOCKET_PUBLIC_URL is.")
+
+# Website analytics (GA4 Data API). A Google service account reads the reports;
+# the page shows its setup steps until all three are set.
+GA_SERVICE_ACCOUNT_EMAIL = env("GA_SERVICE_ACCOUNT_EMAIL", default="")
+# The key's line breaks may arrive escaped, depending on where it was pasted.
+GA_PRIVATE_KEY = env("GA_PRIVATE_KEY", default="").replace("\\n", "\n")
+# Display name=numeric GA4 property ID, comma-separated: Main site=123456789,Blog=987654321
+GA_PROPERTIES = env.dict("GA_PROPERTIES", default={})
 
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",

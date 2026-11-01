@@ -52,6 +52,14 @@ export function BlogIcon(props: IconProps) {
   );
 }
 
+export function AnalyticsIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v15a1 1 0 0 0 1 1h15M8 15l4-4 3 3 5-6" />
+    </svg>
+  );
+}
+
 export function CanvasIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
