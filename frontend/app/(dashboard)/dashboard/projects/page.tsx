@@ -6,12 +6,13 @@ import { PAGE_CONTAINER, PageHeader } from "@/components/layout/page-header";
 import { FadeIn } from "@/components/motion/fade-in";
 import { PROJECT_STATUS_META, ProjectCard, isProjectOverdue } from "@/components/projects/project-card";
 import { ProjectForm } from "@/components/projects/project-form";
+import { ShareProjectDialog } from "@/components/projects/share-project-dialog";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { queryKeys, useBoards, useProjects } from "@/lib/queries";
-import type { CurrentPhase, ProjectStatus } from "@/lib/types";
+import type { CurrentPhase, Project, ProjectStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -26,6 +27,7 @@ export default function ProjectsPage() {
   const { data: boards = [] } = useBoards();
   const [modalOpen, setModalOpen] = useState(false);
   const [filter, setFilter] = useState<StatusFilter>("all");
+  const [sharing, setSharing] = useState<Project | null>(null);
 
   async function handleCreate(data: {
     name: string;
@@ -176,7 +178,12 @@ export default function ProjectsPage() {
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {visible.map((project, index) => (
-                  <ProjectCard key={project.id} project={project} index={index} />
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    index={index}
+                    onShare={setSharing}
+                  />
                 ))}
               </div>
             )}
@@ -196,6 +203,8 @@ export default function ProjectsPage() {
           submitLabel="Create project"
         />
       </Modal>
+
+      <ShareProjectDialog project={sharing} onClose={() => setSharing(null)} />
     </>
   );
 }

@@ -176,6 +176,8 @@ class ProjectSerializer(ProjectAccessFields, serializers.ModelSerializer):
 
 
 class ProjectListSerializer(ProjectAccessFields, serializers.ModelSerializer):
+    # People the project is shared with, not counting the owner.
+    member_count = serializers.IntegerField(read_only=True)
     milestone_count = serializers.IntegerField(read_only=True)
     completed_milestone_count = serializers.IntegerField(read_only=True)
     todo_milestone_count = serializers.IntegerField(read_only=True)
@@ -197,6 +199,7 @@ class ProjectListSerializer(ProjectAccessFields, serializers.ModelSerializer):
             "board_id",
             "owner",
             "is_owner",
+            "member_count",
             "milestone_count",
             "completed_milestone_count",
             "todo_milestone_count",

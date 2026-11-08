@@ -81,6 +81,12 @@ class ProjectSharingTests(APITestCase):
         projects = self.client.get("/api/projects/").json()["results"]
         self.assertEqual(len(projects), 1)
         self.assertEqual(projects[0]["milestone_count"], 1)
+        self.assertEqual(projects[0]["member_count"], 2)
+
+    def test_list_member_count_for_unshared_project(self):
+        self.as_user(self.owner)
+        projects = self.client.get("/api/projects/").json()["results"]
+        self.assertEqual(projects[0]["member_count"], 0)
 
     def test_only_owner_manages_members_and_deletes(self):
         self.add_member()

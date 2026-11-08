@@ -6,6 +6,7 @@ import type { Project, ProjectPhaseSummary, ProjectStatus } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import type { SVGProps } from "react";
 
 export const PROJECT_STATUS_META: Record<ProjectStatus, { label: string; dot: string }> = {
   planning: { label: "Planning", dot: "bg-slate-400" },
@@ -57,12 +58,25 @@ function PhaseStrip({ phases }: { phases: ProjectPhaseSummary[] }) {
   );
 }
 
+function ShareIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1" />
+      <circle cx="9" cy="7" r="3.5" />
+      <path strokeLinecap="round" d="M19 8v6M22 11h-6" />
+    </svg>
+  );
+}
+
 export function ProjectCard({
   project,
   index = 0,
+  onShare,
 }: {
   project: Project;
   index?: number;
+  /** Shows a Share button that calls this, for managing who can see the project. */
+  onShare?: (project: Project) => void;
 }) {
   const milestoneCount = project.milestone_count ?? 0;
   const counts = {
@@ -74,6 +88,12 @@ export function ProjectCard({
   const percent = milestoneCount ? Math.round((counts.done / milestoneCount) * 100) : 0;
   const status = PROJECT_STATUS_META[project.status];
   const overdue = isProjectOverdue(project);
+  const memberCount = project.member_count ?? 0;
+  const shareLabel = project.is_owner
+    ? memberCount > 0
+      ? `Share · shared with ${memberCount} ${memberCount === 1 ? "person" : "people"}`
+      : "Share project"
+    : `Members · ${memberCount + 1} people`;
 
   return (
     <motion.div
@@ -83,10 +103,9 @@ export function ProjectCard({
       whileHover={{ y: -2, transition: { duration: 0.15 } }}
       className="h-full"
     >
-      <Link
-        href={`/dashboard/projects/${project.id}`}
-        className="panel flex h-full flex-col p-5 transition-colors hover:border-[var(--border-strong)]"
-      >
+      {/* The title link stretches over the whole card (see its after: classes),
+          so the Share button can sit on top without nesting inside a link. */}
+      <div className="panel relative flex h-full flex-col p-5 transition-colors focus-within:border-[var(--border-strong)] hover:border-[var(--border-strong)]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
             <span className="chip py-1 text-[11px]">
@@ -102,18 +121,37 @@ export function ProjectCard({
               </span>
             )}
           </div>
-          <span
-            className={cn(
-              "text-[11px]",
-              overdue ? "font-medium text-orange-500" : "text-[var(--muted)]",
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "text-[11px]",
+                overdue ? "font-medium text-orange-500" : "text-[var(--muted)]",
+              )}
+            >
+              {project.due_date ? `${overdue ? "Overdue · " : "Due "}${formatDate(project.due_date)}` : "No due date"}
+            </span>
+            {onShare && (
+              <button
+                type="button"
+                onClick={() => onShare(project)}
+                aria-label={shareLabel}
+                title={shareLabel}
+                className="relative z-10 inline-flex h-7 items-center gap-1 rounded-md border border-[var(--border)] px-2 text-[11px] text-[var(--muted)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--foreground)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+              >
+                <ShareIcon className="h-3.5 w-3.5" aria-hidden />
+                {memberCount > 0 && <span className="tabular-nums">{memberCount}</span>}
+              </button>
             )}
-          >
-            {project.due_date ? `${overdue ? "Overdue · " : "Due "}${formatDate(project.due_date)}` : "No due date"}
-          </span>
+          </div>
         </div>
 
         <h3 className="mt-4 text-lg font-semibold tracking-tight text-[var(--foreground)]">
-          {project.name}
+          <Link
+            href={`/dashboard/projects/${project.id}`}
+            className="outline-none after:absolute after:inset-0 after:rounded-[1.375rem] focus-visible:underline"
+          >
+            {project.name}
+          </Link>
         </h3>
         {project.description && (
           <p className="mt-1 line-clamp-2 text-sm text-[var(--muted)]">{project.description}</p>
@@ -148,7 +186,7 @@ export function ProjectCard({
             Board · <span className="truncate text-[var(--foreground)]">{project.board_title}</span>
           </div>
         )}
-      </Link>
+      </div>
     </motion.div>
   );
 }

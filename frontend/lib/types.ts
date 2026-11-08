@@ -79,6 +79,8 @@ export interface Project {
   /** Whether the viewer created the project (and so manages its members). */
   is_owner?: boolean;
   members?: User[];
+  /** List view only: how many people it's shared with, not counting the owner. */
+  member_count?: number;
   phases?: ProjectPhase[] | ProjectPhaseSummary[];
   milestones?: Milestone[];
   milestone_count?: number;

@@ -1,6 +1,7 @@
 from accounts.serializers import UserSerializer
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, OuterRef, Prefetch, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
@@ -29,7 +30,17 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = accessible_projects(self.request.user).select_related("user")
         if self.action == "list":
+            # A subquery, not Count("members"): joining members would multiply
+            # the milestone rows the counts below add up.
+            member_count = (
+                Project.members.through.objects.filter(project=OuterRef("pk"))
+                .order_by()
+                .values("project")
+                .annotate(n=Count("*"))
+                .values("n")
+            )
             return qs.annotate(
+                member_count=Coalesce(Subquery(member_count), 0),
                 milestone_count=Count("milestones"),
                 completed_milestone_count=Count(
                     "milestones", filter=Q(milestones__completed=True)
